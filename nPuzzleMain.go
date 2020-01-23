@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
-	//"math/rand"
 )
 
 type SequentialInterface interface {
@@ -27,9 +27,15 @@ type NPuzzleState struct {
 	nSize         int
 	puzzleState   [][]int
 	goalState     *[][]int
+	goalDict      *map[int]coord
 	cost          int
 	lastMove      rune
 	possibleMoves *[]rune
+}
+
+type coord struct {
+	x int
+	y int
 }
 
 //nPuzzle functions
@@ -101,9 +107,27 @@ func (s *NPuzzleState) getChildren() []*SequentialInterface {
 	panic("implement me: getChildren")
 }
 
-func (s *NPuzzleState) getManhattanDistanceScore() int {
+func (s *NPuzzleState) getSingleManhattanScore(x int, y int, intChan chan int) {
 
-	return 0
+}
+
+func (s *NPuzzleState) getManhattanDistanceScore() int {
+	//intChan := make(chan int)
+	var returnSum int
+	for x := 0; x < s.nSize; x++ {
+		for y := 0; y < s.nSize; y++ {
+			if s.puzzleState[y][x] != 0 {
+				goal_coord := (*s.goalDict)[s.puzzleState[y][x]]
+				returnSum += int(math.Abs(float64( goal_coord.x-x)) + math.Abs(float64(goal_coord.y-y)))
+			}
+		}
+	}
+
+	//for x := 0; x < s.nSize*s.nSize; x++ {
+	//	returnSum += <-intChan
+	//}
+
+	return returnSum
 }
 
 func (s *NPuzzleState) getH() int {
@@ -139,10 +163,10 @@ func describe(i SequentialInterface) {
 func getGoalState(nSize int) *[][]int {
 
 	goalState := make([][]int, nSize)
-	for x := 0; x < nSize; x++ {
-		goalState[x] = make([]int, nSize)
-		for y := 0; y < nSize; y++ {
-			goalState[x][y] = (x * nSize) + (y) + 1
+	for y := 0; y < nSize; y++ {
+		goalState[y] = make([]int, nSize)
+		for x := 0; x < nSize; x++ {
+			goalState[y][x] = (y * nSize) + (x) + 1
 		}
 	}
 
@@ -151,10 +175,26 @@ func getGoalState(nSize int) *[][]int {
 	return &goalState
 }
 
+func (s *NPuzzleState) populateGoalDict() {
+
+	for y:=0;y<s.nSize;y++{
+		for x:=0;x<s.nSize ;x++  {
+			new_coord:=coord{
+				x: x,
+				y: y,
+			}
+			(*s.goalDict)[(*s.goalState)[y][x]]=new_coord
+			//fmt.Printf("%v,%v\n",(*s.goalState)[y][x],(*s.goalDict)[(*s.goalState)[y][x]])
+		}
+	}
+}
+
 func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	goalState := getGoalState(nSize)
 	possibleMoves := make([]rune, 0)
 	possibleMoves = append(possibleMoves, 'u', 'l', 'd', 'r')
+
+	goalDict := make(map[int]coord)
 
 	startState := &NPuzzleState{
 		goalState:     goalState,
@@ -163,9 +203,14 @@ func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 		currentY:      nSize - 1,
 		possibleMoves: &possibleMoves,
 		nSize:         nSize,
+		goalDict:      &goalDict,
 	}
+
+	startState.populateGoalDict()
+
 	startState.puzzleState = *goalState
 	startState.shuffle(initShuffleAmount)
+	startState.getH()
 	return startState
 }
 
@@ -181,7 +226,7 @@ func main() {
 	nSize := 3
 	var startState SequentialInterface
 
-	startState = createStartState(nSize, 1000)
+	startState = createStartState(nSize, 10000)
 	describe(startState)
 	//fmt.Printf("(%v, %T)\n", goalState, goalState)
 
