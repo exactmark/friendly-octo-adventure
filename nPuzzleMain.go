@@ -103,12 +103,41 @@ func (s *NPuzzleState) lt(other *SequentialInterface) bool {
 	return s.getH() < (*other).getH()
 }
 
-func (s *NPuzzleState) getChildren() []*SequentialInterface {
-	panic("implement me: getChildren")
+func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
+	childOne := *s
+	childOne.currentH = -1
+	childOne.puzzleState = make([][]int, s.nSize)
+	for y := 0; y < s.nSize; y++ {
+		childOne.puzzleState[y] = make([]int, s.nSize)
+		//copy()
+		copy(childOne.puzzleState[y],s.puzzleState[y])
+	}
+
+	childOne.makeMove(direction)
+	childOne.getH()
+	returnChan <- &childOne
+
 }
 
-func (s *NPuzzleState) getSingleManhattanScore(x int, y int, intChan chan int) {
+func (s *NPuzzleState) getChildren() []*SequentialInterface {
 
+	returnList := make([]*SequentialInterface, 0)
+	var counter int
+	returnChannel := make(chan *NPuzzleState)
+	for _, direction := range *(s.possibleMoves) {
+		//describe(s)
+		if s.isValidMove(direction) {
+			counter++
+			go makeChild(s, direction, returnChannel)
+		}
+	}
+
+	for x := 0; x < counter; x++ {
+		single_child := SequentialInterface(<-returnChannel)
+		returnList = append(returnList, &single_child)
+	}
+
+	return returnList
 }
 
 func (s *NPuzzleState) getManhattanDistanceScore() int {
@@ -118,14 +147,10 @@ func (s *NPuzzleState) getManhattanDistanceScore() int {
 		for y := 0; y < s.nSize; y++ {
 			if s.puzzleState[y][x] != 0 {
 				goal_coord := (*s.goalDict)[s.puzzleState[y][x]]
-				returnSum += int(math.Abs(float64( goal_coord.x-x)) + math.Abs(float64(goal_coord.y-y)))
+				returnSum += int(math.Abs(float64(goal_coord.x-x)) + math.Abs(float64(goal_coord.y-y)))
 			}
 		}
 	}
-
-	//for x := 0; x < s.nSize*s.nSize; x++ {
-	//	returnSum += <-intChan
-	//}
 
 	return returnSum
 }
@@ -134,14 +159,9 @@ func (s *NPuzzleState) getH() int {
 	if s.currentH != -1 {
 		return s.currentH
 	} else {
-
-		//	calculate h
-		// store h
 		s.currentH = s.getManhattanDistanceScore()
 		return s.currentH
-		// return h
 	}
-	//return -1
 }
 
 func (s *NPuzzleState) getExpectedCost() int {
@@ -177,13 +197,13 @@ func getGoalState(nSize int) *[][]int {
 
 func (s *NPuzzleState) populateGoalDict() {
 
-	for y:=0;y<s.nSize;y++{
-		for x:=0;x<s.nSize ;x++  {
-			new_coord:=coord{
+	for y := 0; y < s.nSize; y++ {
+		for x := 0; x < s.nSize; x++ {
+			new_coord := coord{
 				x: x,
 				y: y,
 			}
-			(*s.goalDict)[(*s.goalState)[y][x]]=new_coord
+			(*s.goalDict)[(*s.goalState)[y][x]] = new_coord
 			//fmt.Printf("%v,%v\n",(*s.goalState)[y][x],(*s.goalDict)[(*s.goalState)[y][x]])
 		}
 	}
@@ -226,8 +246,14 @@ func main() {
 	nSize := 3
 	var startState SequentialInterface
 
-	startState = createStartState(nSize, 10000)
+	startState = createStartState(nSize, 100)
+
+	childList := startState.getChildren()
+
 	describe(startState)
+	for _, v := range childList {
+		describe(*v)
+	}
 	//fmt.Printf("(%v, %T)\n", goalState, goalState)
 
 	//	Start
