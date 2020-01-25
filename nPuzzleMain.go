@@ -20,7 +20,6 @@ type SequentialInterface interface {
 }
 
 type NPuzzleState struct {
-	//greedy                 bool
 	parent                 *NPuzzleState
 	currentX               int
 	currentY               int
@@ -194,7 +193,7 @@ func (s *NPuzzleState) isGoal() bool {
 	return s.getH() == 0
 }
 
-func describe(i SequentialInterface) {
+func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
 
@@ -263,6 +262,7 @@ type Solver struct {
 	solutionMemo map[string]*SequentialInterface
 	memoQueue    []*SequentialInterface
 	memoSuccess  int
+	greedy       bool
 }
 
 func createSolver() *Solver {
@@ -274,22 +274,77 @@ func createSolver() *Solver {
 		solutionMemo: solutionMemo,
 		memoQueue:    memoQueue,
 		memoSuccess:  0,
+		greedy:       true,
 	}
 
 	return &returnedSolver
 }
 
+func insertAt(myArray *[]*interface{}, item *interface{}, index int)*[]*interface{} {
+
+	actingArray:=*myArray
+	actingArray = append(actingArray, nil)
+	copy(actingArray[index+1:], actingArray[index:])
+	actingArray[index] = item
+	return &actingArray
+}
+
+func testInsert() {
+	var coord0, coord1, coord2, coord3 interface{}
+	coord0 = coord{
+		x: 0,
+		y: 0,
+	}
+	coord1 = coord{
+		x: 1,
+		y: 1,
+	}
+	coord2 = coord{
+		x: 2,
+		y: 2,
+	}
+	coord3 = coord{
+		x: 3,
+		y: 3,
+	}
+
+	coordArray := make([]*interface{}, 0)
+	coordArray = append(coordArray, &coord0, &coord1, &coord3)
+	//coordArray = append(coordArray, nil)
+	//copy(coordArray[2+1:], coordArray[2:])
+	//coordArray[2] = &coord2
+
+	describe(coordArray)
+
+	for _, val := range coordArray {
+		describe(val)
+	}
+
+	coordAddr := &coordArray
+	coordArray = *insertAt(coordAddr, &coord2, 2)
+
+	describe(coordArray)
+	for _, val := range coordArray {
+		describe(val)
+	}
+}
+
 func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
+
+	//frontier_queue:=make([]*SequentialInterface,0)
 
 	panic("implement me")
 }
 
 func main() {
 
+	testInsert()
 	nSize := 3
 	var startState SequentialInterface
 
 	startState = createStartState(nSize, 10)
+
+	describe(startState)
 
 	mySolver := createSolver()
 
