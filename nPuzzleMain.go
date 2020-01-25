@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 )
 
 type SequentialInterface interface {
@@ -19,18 +20,20 @@ type SequentialInterface interface {
 }
 
 type NPuzzleState struct {
-	greedy        bool
-	parent        *NPuzzleState
-	currentX      int
-	currentY      int
-	currentH      int
-	nSize         int
-	puzzleState   [][]int
-	goalState     *[][]int
-	goalDict      *map[int]coord
-	cost          int
-	lastMove      rune
-	possibleMoves *[]rune
+	//greedy                 bool
+	parent                 *NPuzzleState
+	currentX               int
+	currentY               int
+	currentH               int
+	nSize                  int
+	puzzleState            [][]int
+	goalState              *[][]int
+	goalDict               *map[int]coord
+	cost                   int
+	lastMove               rune
+	possibleMoves          *[]rune
+	stateIdentifier        string
+	stateIdentifierCreated bool
 }
 
 type coord struct {
@@ -109,9 +112,10 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 	childOne.puzzleState = make([][]int, s.nSize)
 	for y := 0; y < s.nSize; y++ {
 		childOne.puzzleState[y] = make([]int, s.nSize)
-		//copy()
-		copy(childOne.puzzleState[y],s.puzzleState[y])
+		copy(childOne.puzzleState[y], s.puzzleState[y])
 	}
+
+	childOne.stateIdentifierCreated = false
 
 	childOne.makeMove(direction)
 	childOne.getH()
@@ -133,8 +137,8 @@ func (s *NPuzzleState) getChildren() []*SequentialInterface {
 	}
 
 	for x := 0; x < counter; x++ {
-		single_child := SequentialInterface(<-returnChannel)
-		returnList = append(returnList, &single_child)
+		singleChild := SequentialInterface(<-returnChannel)
+		returnList = append(returnList, &singleChild)
 	}
 
 	return returnList
@@ -146,8 +150,8 @@ func (s *NPuzzleState) getManhattanDistanceScore() int {
 	for x := 0; x < s.nSize; x++ {
 		for y := 0; y < s.nSize; y++ {
 			if s.puzzleState[y][x] != 0 {
-				goal_coord := (*s.goalDict)[s.puzzleState[y][x]]
-				returnSum += int(math.Abs(float64(goal_coord.x-x)) + math.Abs(float64(goal_coord.y-y)))
+				goalCoord := (*s.goalDict)[s.puzzleState[y][x]]
+				returnSum += int(math.Abs(float64(goalCoord.x-x)) + math.Abs(float64(goalCoord.y-y)))
 			}
 		}
 	}
@@ -165,11 +169,25 @@ func (s *NPuzzleState) getH() int {
 }
 
 func (s *NPuzzleState) getExpectedCost() int {
-	panic("implement me: getExpectedCost")
+	return s.cost + s.getH()
 }
 
 func (s *NPuzzleState) getStateIdentifier() string {
-	panic("implement me: getStateIdentifier")
+	if s.stateIdentifierCreated {
+
+	} else {
+		stateId := ""
+		for y := 0; y < s.nSize; y++ {
+			subStrings := make([]string, 0)
+			for x := 0; x < s.nSize; x++ {
+				subStrings = append(subStrings, string(s.puzzleState[y][x]))
+			}
+			stateId += strings.Join(subStrings, "")
+		}
+		s.stateIdentifier = stateId
+		s.stateIdentifierCreated = true
+	}
+	return s.stateIdentifier
 }
 
 func (s *NPuzzleState) isGoal() bool {
@@ -241,23 +259,42 @@ func (s *NPuzzleState) printCurrentGoalState() {
 	fmt.Printf("\n")
 }
 
+type Solver struct {
+	solutionMemo map[string]*SequentialInterface
+	memoQueue    []*SequentialInterface
+	memoSuccess  int
+}
+
+func createSolver() *Solver {
+
+	memoQueue := make([]*SequentialInterface, 0)
+	solutionMemo := make(map[string]*SequentialInterface)
+
+	returnedSolver := Solver{
+		solutionMemo: solutionMemo,
+		memoQueue:    memoQueue,
+		memoSuccess:  0,
+	}
+
+	return &returnedSolver
+}
+
+func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
+
+	panic("implement me")
+}
+
 func main() {
 
 	nSize := 3
 	var startState SequentialInterface
 
-	startState = createStartState(nSize, 100)
+	startState = createStartState(nSize, 10)
 
-	childList := startState.getChildren()
+	mySolver := createSolver()
 
-	describe(startState)
-	for _, v := range childList {
-		describe(*v)
-	}
+	mySolver.solve(&startState, true)
+
 	//fmt.Printf("(%v, %T)\n", goalState, goalState)
 
-	//	Start
-	//	Create sample as goal
-	//  Shuffle to make "start point"
-	//
 }
