@@ -27,6 +27,13 @@ several hours (out of memory).
 The Python implementation of the greedy guided A\* could solve a 4x4 in 
 around 3 minutes and find a reasonable solution.  Golang should be much quicker.
 
+And... I've implemented simple A\* in golang, and it can solve a 4x4 
+in around 15 seconds with a shuffle of 1000 and a Seed of 1.  Other seeds 
+crash with the expected memory overrun.
+
+
+
+
 ### Abstraction
 The SequentialInterface interface gives the functions needed by the solver.
 Any sequential problem should have these functions defined, and should allow

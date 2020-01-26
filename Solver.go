@@ -40,6 +40,11 @@ func (solver *Solver) solveAStar(startState *SequentialInterface) *[]*Sequential
 	return makeTrackbackArray(tailNode)
 }
 
+func (solver *Solver) solveGreedy(startState *SequentialInterface) *[]*SequentialInterface {
+	tailNode:=solver.solve(startState,true)
+	return makeTrackbackArray(tailNode)
+}
+
 func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
 	var repeatedStates int64
 	frontierQueue := make(PriorityQueue, 0)
