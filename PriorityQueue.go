@@ -3,22 +3,24 @@
 
 package main
 
-import "container/heap"
-
+import (
+	"container/heap"
+)
 
 // A PriorityQueue implements heap.Interface and holds Items.
 type PriorityQueue []*PqItem
 
-type PqItem struct{
+type PqItem struct {
 	containedItem *SequentialInterface
-	priority int
-	index int
+	priority      int
+	index         int
 }
 
-func (pq PriorityQueue) Len() int { return len(pq) }
+func (pq PriorityQueue) Len() int {
+	return len(pq)
+}
 
 func (pq PriorityQueue) Less(i, j int) bool {
-	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
 	return pq[i].priority < pq[j].priority
 }
 
@@ -52,12 +54,16 @@ func (pq *PriorityQueue) update(item *PqItem, value *SequentialInterface, priori
 	heap.Fix(pq, item.index)
 }
 
-func (pq *PriorityQueue) PushSequentialInterface(newItem *SequentialInterface){
-	heldItem:=PqItem{
+func (pq *PriorityQueue) PushSequentialInterface(newItem *SequentialInterface) {
+	heldItem := PqItem{
 		containedItem: newItem,
-		priority:      (&newItem).getH(),
-
-		index:         0,
+		priority:      (*newItem).getH(),
+		index:         len(*pq),
 	}
-	pq.Push(heldItem)
+	heap.Push(pq, &heldItem)
+}
+
+func (pq *PriorityQueue) PopSequentialInterface() *SequentialInterface {
+	item := heap.Pop(pq).(*PqItem)
+	return item.containedItem
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	//"math"
 	//"math/rand"
@@ -57,16 +58,22 @@ func insertAt(myArray *[]*SequentialInterface, item *SequentialInterface, index 
 
 func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
 
-	//frontierQueue := make(, 0)
+	frontierQueue := make(PriorityQueue, 0)
 
-	//heap.Init(&frontierQueue)
+	heap.Init(&frontierQueue)
+	frontierQueue.PushSequentialInterface(startState)
 
-	//exploredStateCache := make(map[string]*SequentialInterface, 0)
-	//
-	//for ; len(frontierQueue) > 0; {
-	//	exploringNode :=
-	//}
+	childList:= (*startState).getChildren()
+	for _,val := range(childList){
+		frontierQueue.PushSequentialInterface(val)
+	}
 
+	for frontierQueue.Len() > 0 {
+		item := frontierQueue.PopSequentialInterface()
+		fmt.Printf("%v\n",(*item).getH())
+		describe(*item)
+		//fmt.Printf("%.2d:%s ", item.priority, item.value)
+	}
 	panic("implement me")
 }
 
@@ -86,4 +93,3 @@ func main() {
 	//fmt.Printf("(%v, %T)\n", goalState, goalState)
 
 }
-

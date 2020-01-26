@@ -54,9 +54,7 @@ func (s *NPuzzleState) isValidMove(thisMove rune) bool {
 }
 
 func (s *NPuzzleState) makeSwap(x1 int, y1 int, x2 int, y2 int) {
-	temp := s.puzzleState[y1][x1]
-	s.puzzleState[y1][x1] = s.puzzleState[y2][x2]
-	s.puzzleState[y2][x2] = temp
+	s.puzzleState[y2][x2], s.puzzleState[y1][x1] = s.puzzleState[y1][x1], s.puzzleState[y2][x2]
 }
 
 func (s *NPuzzleState) makeMove(thisMove rune) bool {
@@ -73,13 +71,11 @@ func (s *NPuzzleState) makeMove(thisMove rune) bool {
 		s.currentY += 1
 		s.lastMove = thisMove
 		return true
-
 	} else if thisMove == 'l' {
 		s.makeSwap(s.currentX, s.currentY, s.currentX-1, s.currentY)
 		s.currentX -= 1
 		s.lastMove = thisMove
 		return true
-
 	} else if thisMove == 'r' {
 		s.makeSwap(s.currentX, s.currentY, s.currentX+1, s.currentY)
 		s.currentX += 1
@@ -181,7 +177,6 @@ func (s *NPuzzleState) isGoal() bool {
 	return s.getH() == 0
 }
 
-
 func getGoalState(nSize int) *[][]int {
 
 	goalState := make([][]int, nSize)
@@ -242,4 +237,3 @@ func (s *NPuzzleState) printCurrentGoalState() {
 	}
 	fmt.Printf("\n")
 }
-
