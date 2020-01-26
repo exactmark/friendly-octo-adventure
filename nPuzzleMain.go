@@ -40,7 +40,8 @@ func main() {
 	solvedList:=mySolver.solveAStar(&startState)
 
 	for _,singleNode := range(*solvedList){
-		thisState:=singleNode.(*NPuzzleState)
+		var thisState *NPuzzleState
+		thisState = (*singleNode).(*NPuzzleState)
 		thisState.printCurrentPuzzleState()
 	}
 

@@ -110,7 +110,9 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 
 	childOne.stateIdentifierCreated = false
 
-	childOne.parent=s
+	var storedParent SequentialInterface
+	storedParent = s
+	childOne.parent=&storedParent
 	childOne.makeMove(direction)
 	childOne.getH()
 	returnChan <- &childOne
