@@ -54,10 +54,11 @@ func (pq *PriorityQueue) update(item *PqItem, value *SequentialInterface, priori
 	heap.Fix(pq, item.index)
 }
 
-func (pq *PriorityQueue) PushSequentialInterface(newItem *SequentialInterface) {
+//Added priority to arguments to ease switch to greedy alg
+func (pq *PriorityQueue) PushSequentialInterface(newItem *SequentialInterface,priority int) {
 	heldItem := PqItem{
 		containedItem: newItem,
-		priority:      (*newItem).getH(),
+		priority:      priority,
 		index:         len(*pq),
 	}
 	heap.Push(pq, &heldItem)

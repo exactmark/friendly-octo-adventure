@@ -61,6 +61,7 @@ func (s *NPuzzleState) makeMove(thisMove rune) bool {
 	if !s.isValidMove(thisMove) {
 		return false
 	}
+	s.cost+=1
 	if thisMove == 'u' {
 		s.makeSwap(s.currentX, s.currentY, s.currentX, s.currentY-1)
 		s.currentY -= 1

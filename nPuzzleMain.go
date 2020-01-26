@@ -61,11 +61,17 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 	frontierQueue := make(PriorityQueue, 0)
 
 	heap.Init(&frontierQueue)
-	frontierQueue.PushSequentialInterface(startState)
+	var priority int
+	if greedy{
+		priority=(*startState).getH()
+	}	else{
+		priority=(*startState).getExpectedCost()
+	}
+	frontierQueue.PushSequentialInterface(startState, priority)
 
 	childList:= (*startState).getChildren()
 	for _,val := range(childList){
-		frontierQueue.PushSequentialInterface(val)
+		frontierQueue.PushSequentialInterface(val,(*val).getH())
 	}
 
 	for frontierQueue.Len() > 0 {
