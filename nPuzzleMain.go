@@ -36,6 +36,9 @@ func main() {
 
 	mySolver.solve(&startState, false)
 
+	puzzleState:=startState.(*NPuzzleState)
+	puzzleState.printCurrentGoalState()
+	puzzleState.printCurrentPuzzleState()
 	//fmt.Printf("(%v, %T)\n", goalState, goalState)
 
 }

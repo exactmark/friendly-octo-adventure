@@ -211,6 +211,14 @@ func (s *NPuzzleState) populateGoalDict() {
 	}
 }
 
+func (s *NPuzzleState)copyGoalToPuzzleState(){
+	s.puzzleState=make([][]int,s.nSize)
+	for y:=0;y<s.nSize ;y++  {
+		s.puzzleState[y]=make([]int,s.nSize)
+		copy(s.puzzleState[y],(*s.goalState)[y])
+	}
+}
+
 func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	goalState := getGoalState(nSize)
 	possibleMoves := make([]rune, 0)
@@ -229,17 +237,27 @@ func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	}
 
 	startState.populateGoalDict()
+	startState.copyGoalToPuzzleState()
 
-	startState.puzzleState = *goalState
 	startState.shuffle(initShuffleAmount)
 	startState.getH()
 	startState.cost=0
 	return startState
 }
 
-func (s *NPuzzleState) printCurrentGoalState() {
+
+
+func (s *NPuzzleState) printCurrentPuzzleState() {
 	for y := 0; y < s.nSize; y++ {
 		fmt.Printf("%v\n", s.puzzleState[y])
+	}
+	fmt.Printf("\n")
+}
+
+
+func (s *NPuzzleState) printCurrentGoalState() {
+	for y := 0; y < s.nSize; y++ {
+		fmt.Printf("%v\n", (*s.goalState)[y])
 	}
 	fmt.Printf("\n")
 }
