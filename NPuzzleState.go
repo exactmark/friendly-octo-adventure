@@ -61,7 +61,11 @@ func (s *NPuzzleState) makeMove(thisMove rune) bool {
 	if !s.isValidMove(thisMove) {
 		return false
 	}
-	s.cost+=1
+	if s.parent!=nil{
+		s.cost=(s.parent).cost+1
+	}else{
+		s.cost=s.cost+1
+	}
 	if thisMove == 'u' {
 		s.makeSwap(s.currentX, s.currentY, s.currentX, s.currentY-1)
 		s.currentY -= 1
@@ -100,7 +104,7 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 	}
 
 	childOne.stateIdentifierCreated = false
-
+	childOne.parent=s
 	childOne.makeMove(direction)
 	childOne.getH()
 	returnChan <- &childOne
@@ -229,6 +233,7 @@ func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	startState.puzzleState = *goalState
 	startState.shuffle(initShuffleAmount)
 	startState.getH()
+	startState.cost=0
 	return startState
 }
 
