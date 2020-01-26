@@ -88,7 +88,7 @@ func main() {
 	nSize := 3
 	var startState SequentialInterface
 
-	startState = createStartState(nSize, 10)
+	startState = createStartState(nSize, 1000)
 
 	describe(startState)
 
