@@ -8,7 +8,7 @@ import (
 )
 
 type NPuzzleState struct {
-	parent                 *NPuzzleState
+	parent                 *SequentialInterface
 	currentX               int
 	currentY               int
 	currentH               int
@@ -21,6 +21,10 @@ type NPuzzleState struct {
 	possibleMoves          *[]rune
 	stateIdentifier        string
 	stateIdentifierCreated bool
+}
+
+func (s *NPuzzleState) getParent() *SequentialInterface {
+	return s.parent
 }
 
 type coord struct {
@@ -62,7 +66,8 @@ func (s *NPuzzleState) makeMove(thisMove rune) bool {
 		return false
 	}
 	if s.parent!=nil{
-		s.cost=(s.parent).cost+1
+		parent:=(*s.parent).(*NPuzzleState)
+		s.cost=parent.cost+1
 	}else{
 		s.cost=s.cost+1
 	}
@@ -104,6 +109,7 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 	}
 
 	childOne.stateIdentifierCreated = false
+
 	childOne.parent=s
 	childOne.makeMove(direction)
 	childOne.getH()

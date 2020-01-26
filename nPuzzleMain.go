@@ -17,6 +17,7 @@ type SequentialInterface interface {
 	isValidMove(singleMove rune) bool
 	makeMove(singleMove rune) bool
 	shuffle(shuffleAmount int)
+	getParent() *SequentialInterface
 }
 
 func describe(i interface{}) {
@@ -30,15 +31,17 @@ func main() {
 
 	startState = createStartState(nSize, 1000)
 
-	describe(startState)
+	//describe(startState)
 
 	mySolver := createSolver()
 
 	mySolver.solve(&startState, false)
 
-	puzzleState:=startState.(*NPuzzleState)
-	puzzleState.printCurrentGoalState()
-	puzzleState.printCurrentPuzzleState()
-	//fmt.Printf("(%v, %T)\n", goalState, goalState)
+	solvedList:=mySolver.solveAStar(&startState)
+
+	for _,singleNode := range(*solvedList){
+		thisState:=singleNode.(*NPuzzleState)
+		thisState.printCurrentPuzzleState()
+	}
 
 }

@@ -23,6 +23,23 @@ func createSolver() *Solver {
 	return &returnedSolver
 }
 
+func makeTrackbackArray(tailNode *SequentialInterface)*[]*SequentialInterface{
+	returnArray:=make([]*SequentialInterface,0)
+
+	thisNode:=tailNode
+	for thisNode!=nil{
+		returnArray= append(returnArray, thisNode)
+		thisNode= (*thisNode).getParent()
+	}
+
+	return &returnArray
+}
+
+func (solver *Solver) solveAStar(startState *SequentialInterface) *[]*SequentialInterface {
+	tailNode:=solver.solve(startState,false)
+	return makeTrackbackArray(tailNode)
+}
+
 func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
 	var repeatedStates int64
 	frontierQueue := make(PriorityQueue, 0)
