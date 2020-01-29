@@ -31,7 +31,26 @@ And... I've implemented simple A\* in golang, and it can solve a 4x4
 in around 15 seconds with a shuffle of 1000 and a Seed of 1.  Other seeds 
 crash with the expected memory overrun.
 
+```
+StartState
+[6 1 13 10]
+[15 0 4 9]
+[2 14 7 3]
+[12 11 5 8]
 
+Goal
+[1 2 3 4]
+[5 6 7 8]
+[9 10 11 12]
+[13 14 15 0]
+
+Found solution in 21.32594146s time.
+Found solution in 53 steps
+
+Found solution in 23.866670582s time.
+Found solution in 53 steps
+
+```
 
 
 ### Abstraction

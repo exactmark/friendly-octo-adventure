@@ -1,6 +1,9 @@
 package main
 
-import "container/heap"
+import (
+	"container/heap"
+	"fmt"
+)
 
 type Solver struct {
 	solutionMemo map[string]*SequentialInterface
@@ -9,6 +12,7 @@ type Solver struct {
 	greedy       bool
 }
 
+//createSolver will initialize a solver state and return a pointer to it.
 func createSolver() *Solver {
 
 	memoQueue := make([]*SequentialInterface, 0)
@@ -23,6 +27,8 @@ func createSolver() *Solver {
 	return &returnedSolver
 }
 
+//makeTrackbackArray will take a given SequentialInterface or nil, and
+//return a slice of the sequential states leading to the goal.
 func makeTrackbackArray(tailNode *SequentialInterface)*[]*SequentialInterface{
 	returnArray:=make([]*SequentialInterface,0)
 
@@ -35,16 +41,28 @@ func makeTrackbackArray(tailNode *SequentialInterface)*[]*SequentialInterface{
 	return &returnArray
 }
 
+
+//solveAStar will attempt to find a solution using the solve algorithm
+//below, continuing until a state returns isGoal. The priorityQueue will be
+//arranged by getExpectedCost. solveAStar will return a slice of the Sequential
+//states in order of the solution.
 func (solver *Solver) solveAStar(startState *SequentialInterface) *[]*SequentialInterface {
 	tailNode:=solver.solve(startState,false)
 	return makeTrackbackArray(tailNode)
 }
 
+//solveGreedy will attempt to find a solution using the solve algorithm
+//below, continuing until a state returns isGoal. The priorityQueue will be
+//arranged by getH. solveGreedy will return a slice of the Sequential
+//states in order of the solution.
 func (solver *Solver) solveGreedy(startState *SequentialInterface) *[]*SequentialInterface {
 	tailNode:=solver.solve(startState,true)
 	return makeTrackbackArray(tailNode)
 }
 
+//solve will attempt to find a series of SequentialInterface steps to reach a
+//state that satisfies isGoal. The function will return a pointer to the goalState
+//which can be used to track backwards, or nil.
 func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *SequentialInterface {
 	var repeatedStates int64
 	frontierQueue := make(PriorityQueue, 0)
@@ -91,5 +109,14 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		}
 	}
 	panic("unable to find solution")
+}
+
+func (solver *Solver) greedyGuidedAStar(s *SequentialInterface)  *[]*SequentialInterface {
+
+	initialSolution:= makeTrackbackArray(solver.solve(s,true))
+
+
+	fmt.Printf("initial solution is length %v\n",len(*initialSolution))
+	panic("implement")
 }
 

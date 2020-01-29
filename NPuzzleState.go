@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -32,8 +33,8 @@ type coord struct {
 	y int
 }
 
-//nPuzzle functions
-
+//shuffle will take the given puzzleState and make N valid moves on it.
+//Further implementation would be to ensure that depth reaches shuffleAmount
 func (s *NPuzzleState) shuffle(shuffleAmount int) {
 	for x := 0; x < shuffleAmount; {
 		thisMove := (*s.possibleMoves)[rand.Intn(len(*s.possibleMoves))]
@@ -65,11 +66,11 @@ func (s *NPuzzleState) makeMove(thisMove rune) bool {
 	if !s.isValidMove(thisMove) {
 		return false
 	}
-	if s.parent!=nil{
-		parent:=(*s.parent).(*NPuzzleState)
-		s.cost=parent.cost+1
-	}else{
-		s.cost=s.cost+1
+	if s.parent != nil {
+		parent := (*s.parent).(*NPuzzleState)
+		s.cost = parent.cost + 1
+	} else {
+		s.cost = s.cost + 1
 	}
 	if thisMove == 'u' {
 		s.makeSwap(s.currentX, s.currentY, s.currentX, s.currentY-1)
@@ -112,7 +113,7 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 
 	var storedParent SequentialInterface
 	storedParent = s
-	childOne.parent=&storedParent
+	childOne.parent = &storedParent
 	childOne.makeMove(direction)
 	childOne.getH()
 	returnChan <- &childOne
@@ -122,17 +123,16 @@ func makeChild(s *NPuzzleState, direction rune, returnChan chan *NPuzzleState) {
 func (s *NPuzzleState) getChildren() []*SequentialInterface {
 
 	returnList := make([]*SequentialInterface, 0)
-	var counter int
+	var numChildren int
 	returnChannel := make(chan *NPuzzleState)
 	for _, direction := range *(s.possibleMoves) {
-		//describe(s)
 		if s.isValidMove(direction) {
-			counter++
+			numChildren++
 			go makeChild(s, direction, returnChannel)
 		}
 	}
 
-	for x := 0; x < counter; x++ {
+	for x := 0; x < numChildren; x++ {
 		singleChild := SequentialInterface(<-returnChannel)
 		returnList = append(returnList, &singleChild)
 	}
@@ -176,12 +176,15 @@ func (s *NPuzzleState) getStateIdentifier() string {
 		for y := 0; y < s.nSize; y++ {
 			subStrings := make([]string, 0)
 			for x := 0; x < s.nSize; x++ {
-				subStrings = append(subStrings, string(s.puzzleState[y][x]))
+				//singleChar := strconv.Itoa(s.puzzleState[y][x])
+				//fmt.Printf("singlechar %v\n",singleChar)
+				subStrings = append(subStrings, strconv.Itoa(s.puzzleState[y][x])+",")
 			}
-			stateId += strings.Join(subStrings, "")
+			stateId += strings.Join(subStrings, ",")
 		}
 		s.stateIdentifier = stateId
 		s.stateIdentifierCreated = true
+		//fmt.Printf("StateIdentifier %v\n",s.stateIdentifier)
 	}
 	return s.stateIdentifier
 }
@@ -190,7 +193,7 @@ func (s *NPuzzleState) isGoal() bool {
 	return s.getH() == 0
 }
 
-func getGoalState(nSize int) *[][]int {
+func getBasicGoalState(nSize int) *[][]int {
 
 	goalState := make([][]int, nSize)
 	for y := 0; y < nSize; y++ {
@@ -219,16 +222,36 @@ func (s *NPuzzleState) populateGoalDict() {
 	}
 }
 
-func (s *NPuzzleState)copyGoalToPuzzleState(){
-	s.puzzleState=make([][]int,s.nSize)
-	for y:=0;y<s.nSize ;y++  {
-		s.puzzleState[y]=make([]int,s.nSize)
-		copy(s.puzzleState[y],(*s.goalState)[y])
+func (s *NPuzzleState) copyGoalToPuzzleState() {
+	s.puzzleState = make([][]int, s.nSize)
+	for y := 0; y < s.nSize; y++ {
+		s.puzzleState[y] = make([]int, s.nSize)
+		copy(s.puzzleState[y], (*s.goalState)[y])
+	}
+}
+
+func getArrayFromFlatState(nSize int, startList []int) *[][]int {
+	if len(startList) != (nSize * nSize) {
+		panic("not enough items")
+	} else {
+		var counter int = 0
+		goalState := make([][]int, nSize)
+		for y := 0; y < nSize; y++ {
+			goalState[y] = make([]int, nSize)
+			for x := 0; x < nSize; x++ {
+				goalState[y][x] = startList[counter]
+				counter++
+			}
+		}
+		return &goalState
 	}
 }
 
 func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
-	goalState := getGoalState(nSize)
+	var goalState *[][]int
+
+	goalState = getBasicGoalState(nSize)
+
 	possibleMoves := make([]rune, 0)
 	possibleMoves = append(possibleMoves, 'u', 'l', 'd', 'r')
 
@@ -249,11 +272,39 @@ func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 
 	startState.shuffle(initShuffleAmount)
 	startState.getH()
-	startState.cost=0
+	startState.cost = 0
 	return startState
 }
 
+func (s *NPuzzleState) createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface {
+	goalStateTyped := goalState.([]int)
+	startStateTyped := startState.([]int)
+	nSize := s.nSize
+	possibleMoves := make([]rune, 0)
+	possibleMoves = append(possibleMoves, 'u', 'l', 'd', 'r')
 
+	goalDict := make(map[int]coord)
+
+	var sequentialState SequentialInterface
+	sequentialState = &NPuzzleState{
+		goalState:     getArrayFromFlatState(nSize, goalStateTyped),
+		currentX:      nSize - 1,
+		currentH:      -1,
+		currentY:      nSize - 1,
+		possibleMoves: &possibleMoves,
+		nSize:         nSize,
+		goalDict:      &goalDict,
+		cost:          0,
+		puzzleState:   *getArrayFromFlatState(nSize, startStateTyped),
+	}
+
+	(sequentialState).(*NPuzzleState).populateGoalDict()
+
+	sequentialState.getH()
+
+	return &sequentialState
+
+}
 
 func (s *NPuzzleState) printCurrentPuzzleState() {
 	for y := 0; y < s.nSize; y++ {
@@ -261,7 +312,6 @@ func (s *NPuzzleState) printCurrentPuzzleState() {
 	}
 	fmt.Printf("\n")
 }
-
 
 func (s *NPuzzleState) printCurrentGoalState() {
 	for y := 0; y < s.nSize; y++ {
