@@ -21,7 +21,8 @@ type SequentialInterface interface {
 	makeMove(singleMove rune) bool
 	shuffle(shuffleAmount int)
 	getParent() *SequentialInterface
-	//createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface
+	createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface
+	exportCurrentState() interface{}
 }
 
 func describe(i interface{}) {
@@ -43,7 +44,7 @@ func mainBasicRun(seed int) {
 	// potentially different. This explains the difference in solve times on
 	// A* but does not really explain why different seeds will crash.
 
-	nSize := 4
+	nSize := 3
 	var startState SequentialInterface
 
 	rand.Seed(int64(seed))

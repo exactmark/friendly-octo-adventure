@@ -29,25 +29,24 @@ func createSolver() *Solver {
 
 //makeTrackbackArray will take a given SequentialInterface or nil, and
 //return a slice of the sequential states leading to the goal.
-func makeTrackbackArray(tailNode *SequentialInterface)*[]*SequentialInterface{
-	returnArray:=make([]*SequentialInterface,0)
+func makeTrackbackArray(tailNode *SequentialInterface) *[]*SequentialInterface {
+	returnArray := make([]*SequentialInterface, 0)
 
-	thisNode:=tailNode
-	for thisNode!=nil{
-		returnArray= append(returnArray, thisNode)
-		thisNode= (*thisNode).getParent()
+	thisNode := tailNode
+	for thisNode != nil {
+		returnArray = append(returnArray, thisNode)
+		thisNode = (*thisNode).getParent()
 	}
 
 	return &returnArray
 }
-
 
 //solveAStar will attempt to find a solution using the solve algorithm
 //below, continuing until a state returns isGoal. The priorityQueue will be
 //arranged by getExpectedCost. solveAStar will return a slice of the Sequential
 //states in order of the solution.
 func (solver *Solver) solveAStar(startState *SequentialInterface) *[]*SequentialInterface {
-	tailNode:=solver.solve(startState,false)
+	tailNode := solver.solve(startState, false)
 	return makeTrackbackArray(tailNode)
 }
 
@@ -56,7 +55,7 @@ func (solver *Solver) solveAStar(startState *SequentialInterface) *[]*Sequential
 //arranged by getH. solveGreedy will return a slice of the Sequential
 //states in order of the solution.
 func (solver *Solver) solveGreedy(startState *SequentialInterface) *[]*SequentialInterface {
-	tailNode:=solver.solve(startState,true)
+	tailNode := solver.solve(startState, true)
 	return makeTrackbackArray(tailNode)
 }
 
@@ -75,6 +74,9 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		priority = (*startState).getH()
 	} else {
 		priority = (*startState).getExpectedCost()
+		//memoId = (list_to_string(puzzle.grid), list_to_string(puzzle.goal))
+		//	val,ok:= solver.solutionMemo[memoId]
+		// if ok{return val}
 	}
 	frontierQueue.PushSequentialInterface(startState, priority)
 
@@ -87,7 +89,7 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		exploringNode := *frontierQueue.PopSequentialInterface()
 		if exploringNode.isGoal() {
 			if !greedy {
-				//	store to solutionMemo cache
+				//solver.solutionMemo[memoId]=&exploringNode
 			}
 			return &exploringNode
 		}
@@ -104,19 +106,63 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 				} else {
 					childPriority = (*singleChild).getExpectedCost()
 				}
-				frontierQueue.PushSequentialInterface(singleChild,childPriority)
+				frontierQueue.PushSequentialInterface(singleChild, childPriority)
 			}
 		}
 	}
 	panic("unable to find solution")
 }
 
-func (solver *Solver) greedyGuidedAStar(s *SequentialInterface)  *[]*SequentialInterface {
-
-	initialSolution:= makeTrackbackArray(solver.solve(s,true))
-
-
-	fmt.Printf("initial solution is length %v\n",len(*initialSolution))
-	panic("implement")
+type solutionEnvelope struct {
+	position     int
+	solutionTail *SequentialInterface
 }
 
+func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, envelopePosition int, startIndex int, endIndex int, envelopeChannel chan solutionEnvelope) {
+	if endIndex > len(*solutionList) {
+		endIndex = len(*solutionList) - 1
+	}
+	fmt.Printf("Finding solution of %v\n",endIndex-startIndex)
+	partialSolutionDNA := (*((*solutionList)[startIndex])).createSequentialState((*((*solutionList)[startIndex])).exportCurrentState(), (*((*solutionList)[endIndex])).exportCurrentState())
+	(*partialSolutionDNA).(*NPuzzleState).printCurrentPuzzleState()
+	(*partialSolutionDNA).(*NPuzzleState).printCurrentGoalState()
+	solutionTail := solver.solve(partialSolutionDNA, false)
+	envelopeChannel <- solutionEnvelope{
+		position:     envelopePosition,
+		solutionTail: solutionTail,
+	}
+}
+
+func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialInterface {
+	return solver.greedyGuidedAStarWithArgs(s, 9, 25)
+}
+
+func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
+	currentSolution := makeTrackbackArray(solver.solve(s, true))
+
+	fmt.Printf("initial solution is length %v\n", len(*currentSolution))
+
+	var endIndex int
+	endIndex = len(*currentSolution)
+	currentInc := startInc
+
+	for currentInc < lastInc {
+		currentInc++
+		endIndex++
+		solutionPart := 0
+		envelopeChannel := make(chan solutionEnvelope, 0)
+		for singleIndex := 0; singleIndex < endIndex; singleIndex += currentInc {
+			go solver.findSolutionPart(currentSolution, solutionPart, singleIndex, singleIndex+currentInc, envelopeChannel)
+			solutionPart++
+		}
+		envelopeList := make([]*SequentialInterface, solutionPart)
+		for returnedEnvelopes := 0; returnedEnvelopes < solutionPart; returnedEnvelopes++ {
+			thisEnvelope := <-envelopeChannel
+			envelopeList[thisEnvelope.position] = thisEnvelope.solutionTail
+			fmt.Printf("got part %v\n", thisEnvelope.position)
+		}
+		fmt.Printf("found parts...\n")
+	}
+
+	panic("implement")
+}

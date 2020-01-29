@@ -288,9 +288,9 @@ func (s *NPuzzleState) createSequentialState(goalState interface{}, startState i
 	var sequentialState SequentialInterface
 	sequentialState = &NPuzzleState{
 		goalState:     getArrayFromFlatState(nSize, goalStateTyped),
-		currentX:      nSize - 1,
+		currentX:      -1,
 		currentH:      -1,
-		currentY:      nSize - 1,
+		currentY:      -1,
 		possibleMoves: &possibleMoves,
 		nSize:         nSize,
 		goalDict:      &goalDict,
@@ -299,6 +299,10 @@ func (s *NPuzzleState) createSequentialState(goalState interface{}, startState i
 	}
 
 	(sequentialState).(*NPuzzleState).populateGoalDict()
+
+	thisGoalDict := *(sequentialState).(*NPuzzleState).goalDict
+	(sequentialState).(*NPuzzleState).currentX = thisGoalDict[0].x
+	(sequentialState).(*NPuzzleState).currentY = thisGoalDict[0].y
 
 	sequentialState.getH()
 
@@ -318,4 +322,16 @@ func (s *NPuzzleState) printCurrentGoalState() {
 		fmt.Printf("%v\n", (*s.goalState)[y])
 	}
 	fmt.Printf("\n")
+}
+
+func (s *NPuzzleState) exportCurrentState() interface{} {
+	returnState := make([]int, 0)
+
+	for y := 0; y < s.nSize; y++ {
+		for x := 0; x < s.nSize; x++ {
+			returnState = append(returnState, s.puzzleState[y][x])
+		}
+	}
+
+	return returnState
 }
