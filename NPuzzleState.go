@@ -300,9 +300,16 @@ func (s *NPuzzleState) createSequentialState(goalState interface{}, startState i
 
 	(sequentialState).(*NPuzzleState).populateGoalDict()
 
-	thisGoalDict := *(sequentialState).(*NPuzzleState).goalDict
-	(sequentialState).(*NPuzzleState).currentX = thisGoalDict[0].x
-	(sequentialState).(*NPuzzleState).currentY = thisGoalDict[0].y
+	for y:=0;y<s.nSize;y++{
+		for x:=0;x<s.nSize;x++{
+			if (sequentialState).(*NPuzzleState).puzzleState[y][x]==0{
+				(sequentialState).(*NPuzzleState).currentX = x
+				(sequentialState).(*NPuzzleState).currentY = y
+				x=s.nSize
+				y=s.nSize
+			}
+		}
+	}
 
 	sequentialState.getH()
 

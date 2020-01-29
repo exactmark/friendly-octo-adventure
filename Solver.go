@@ -110,6 +110,8 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 			}
 		}
 	}
+	(*startState).(*NPuzzleState).printCurrentPuzzleState()
+	(*startState).(*NPuzzleState).printCurrentGoalState()
 	panic("unable to find solution")
 }
 
@@ -156,6 +158,12 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			solutionPart++
 		}
 		envelopeList := make([]*SequentialInterface, solutionPart)
+		//frontierQueue := make(PriorityQueue, 0)
+
+		//exploredStateCache := make(map[string]*SequentialInterface, 0)
+		//
+		//heap.Init(&frontierQueue)
+
 		for returnedEnvelopes := 0; returnedEnvelopes < solutionPart; returnedEnvelopes++ {
 			thisEnvelope := <-envelopeChannel
 			envelopeList[thisEnvelope.position] = thisEnvelope.solutionTail
