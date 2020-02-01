@@ -10,6 +10,7 @@ type Solver struct {
 	memoQueue    []*SequentialInterface
 	memoSuccess  int
 	greedy       bool
+	debugLog     bool
 }
 
 //createSolver will initialize a solver state and return a pointer to it.
@@ -22,6 +23,7 @@ func createSolver() *Solver {
 		solutionMemo: solutionMemo,
 		memoQueue:    memoQueue,
 		memoSuccess:  0,
+		debugLog:  false,
 	}
 
 	return &returnedSolver
@@ -110,8 +112,8 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 			}
 		}
 	}
-	(*startState).(*NPuzzleState).printCurrentPuzzleState()
-	(*startState).(*NPuzzleState).printCurrentGoalState()
+	//(*startState).(*NPuzzleState).printCurrentPuzzleState()
+	//(*startState).(*NPuzzleState).printCurrentGoalState()
 	panic("unable to find solution")
 }
 
@@ -121,13 +123,16 @@ type solutionEnvelope struct {
 }
 
 func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, envelopePosition int, startIndex int, endIndex int, envelopeChannel chan solutionEnvelope) {
-	if endIndex > len(*solutionList) {
+	if endIndex >= len(*solutionList) {
 		endIndex = len(*solutionList) - 1
 	}
-	fmt.Printf("Finding solution of %v\n",endIndex-startIndex)
-	partialSolutionDNA := (*((*solutionList)[startIndex])).createSequentialState((*((*solutionList)[startIndex])).exportCurrentState(), (*((*solutionList)[endIndex])).exportCurrentState())
-	(*partialSolutionDNA).(*NPuzzleState).printCurrentPuzzleState()
-	(*partialSolutionDNA).(*NPuzzleState).printCurrentGoalState()
+	if solver.debugLog {
+		fmt.Printf("Finding solution for:\n pos %v\n start: %v\n end: %v\n", envelopePosition, startIndex, endIndex)
+	}
+	partialSolutionDNA := (*((*solutionList)[startIndex])).createSequentialState((*((*solutionList)[endIndex])).exportCurrentState(), (*((*solutionList)[startIndex])).exportCurrentState())
+
+	//(*partialSolutionDNA).(*NPuzzleState).printCurrentPuzzleState()
+	//(*partialSolutionDNA).(*NPuzzleState).printCurrentGoalState()
 	solutionTail := solver.solve(partialSolutionDNA, false)
 	envelopeChannel <- solutionEnvelope{
 		position:     envelopePosition,
@@ -141,36 +146,86 @@ func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialIn
 
 func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
 	currentSolution := makeTrackbackArray(solver.solve(s, true))
-
-	fmt.Printf("initial solution is length %v\n", len(*currentSolution))
-
+	if solver.debugLog {
+		fmt.Printf("initial solution is length %v\n", len(*currentSolution))
+	}
 	var endIndex int
 	endIndex = len(*currentSolution)
 	currentInc := startInc
 
 	for currentInc < lastInc {
-		currentInc++
-		endIndex++
+		oldSolutionLen := len(*currentSolution)
 		solutionPart := 0
 		envelopeChannel := make(chan solutionEnvelope, 0)
 		for singleIndex := 0; singleIndex < endIndex; singleIndex += currentInc {
-			go solver.findSolutionPart(currentSolution, solutionPart, singleIndex, singleIndex+currentInc, envelopeChannel)
+			go solver.findSolutionPart(currentSolution, solutionPart, singleIndex, singleIndex+currentInc-1, envelopeChannel)
 			solutionPart++
 		}
-		envelopeList := make([]*SequentialInterface, solutionPart)
-		//frontierQueue := make(PriorityQueue, 0)
 
-		//exploredStateCache := make(map[string]*SequentialInterface, 0)
-		//
-		//heap.Init(&frontierQueue)
+		envelopeHeap := make(PriorityQueue, 0)
+
+		heap.Init(&envelopeHeap)
 
 		for returnedEnvelopes := 0; returnedEnvelopes < solutionPart; returnedEnvelopes++ {
 			thisEnvelope := <-envelopeChannel
-			envelopeList[thisEnvelope.position] = thisEnvelope.solutionTail
-			fmt.Printf("got part %v\n", thisEnvelope.position)
+			envelopeHeap.PushSequentialInterface(thisEnvelope.solutionTail, thisEnvelope.position)
+			if solver.debugLog {
+				fmt.Printf("got part %v\n", thisEnvelope.position)
+			}
 		}
-		fmt.Printf("found parts...\n")
-	}
 
-	panic("implement")
+		var lastNode *SequentialInterface
+
+		lastNode = nil
+
+		for len(envelopeHeap) > 0 {
+			thisNode := envelopeHeap.PopSequentialInterface()
+			pointHeadAtLastNode(thisNode, lastNode)
+			if solver.debugLog {
+				fmt.Printf("Last node is \n")
+				if lastNode == nil {
+					fmt.Printf("nil\n")
+				} else {
+					(*lastNode).(*NPuzzleState).printCurrentPuzzleState()
+				}
+			}
+			lastNode = &(*thisNode)
+		}
+
+		if solver.debugLog {
+			fmt.Printf("found parts...\n")
+		}
+		currentSolution = makeTrackbackArray(lastNode)
+		newSolutionLength := len(*currentSolution)
+		if newSolutionLength < oldSolutionLen {
+			//	do nothing
+		} else {
+			currentInc++
+		}
+
+		if solver.debugLog {
+			fmt.Printf("new solution len %v\n", len(*currentSolution))
+			for _, val := range *currentSolution {
+				(*val).(*NPuzzleState).printCurrentPuzzleState()
+			}
+		}
+		endIndex = len(*currentSolution)
+
+	}
+if solver.debugLog{
+	fmt.Printf("last solution len %v\n", len(*currentSolution))
+}
+	return currentSolution
+}
+
+func pointHeadAtLastNode(thisNode *SequentialInterface, lastNode *SequentialInterface) {
+	if lastNode == nil {
+
+	} else {
+		inspectedNode := thisNode
+		for (*inspectedNode).getParent() != nil {
+			inspectedNode = (*inspectedNode).getParent()
+		}
+		(*inspectedNode).setParent(lastNode)
+	}
 }

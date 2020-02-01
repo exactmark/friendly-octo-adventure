@@ -24,6 +24,10 @@ type NPuzzleState struct {
 	stateIdentifierCreated bool
 }
 
+func (s *NPuzzleState) setParent(node *SequentialInterface) {
+	s.parent=node
+}
+
 func (s *NPuzzleState) getParent() *SequentialInterface {
 	return s.parent
 }
