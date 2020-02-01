@@ -1,5 +1,4 @@
-# friendly-octo-adventure
-Delightfully named git repository.
+# greedy-guided-astar
 
 ## Purpose
 This is a reasonably unique implementation of the A\* algorithm. A greedy

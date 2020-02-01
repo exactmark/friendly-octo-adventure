@@ -25,7 +25,7 @@ type NPuzzleState struct {
 }
 
 func (s *NPuzzleState) setParent(node *SequentialInterface) {
-	s.parent=node
+	s.parent = node
 }
 
 func (s *NPuzzleState) getParent() *SequentialInterface {
@@ -304,13 +304,13 @@ func (s *NPuzzleState) createSequentialState(goalState interface{}, startState i
 
 	(sequentialState).(*NPuzzleState).populateGoalDict()
 
-	for y:=0;y<s.nSize;y++{
-		for x:=0;x<s.nSize;x++{
-			if (sequentialState).(*NPuzzleState).puzzleState[y][x]==0{
+	for y := 0; y < s.nSize; y++ {
+		for x := 0; x < s.nSize; x++ {
+			if (sequentialState).(*NPuzzleState).puzzleState[y][x] == 0 {
 				(sequentialState).(*NPuzzleState).currentX = x
 				(sequentialState).(*NPuzzleState).currentY = y
-				x=s.nSize
-				y=s.nSize
+				x = s.nSize
+				y = s.nSize
 			}
 		}
 	}
@@ -345,4 +345,34 @@ func (s *NPuzzleState) exportCurrentState() interface{} {
 	}
 
 	return returnState
+}
+
+func (s *NPuzzleState) testSolution() bool {
+
+	thisState := s
+	var nextState *NPuzzleState
+	for thisState != nil {
+
+		if (thisState.parent) == nil {
+			return true
+		} else {
+			nextState = (*thisState.parent).(*NPuzzleState)
+			stateChildren := nextState.getChildren()
+			foundChild := false
+			for _, singleChild := range stateChildren {
+				//fmt.Printf("checking\n%v\n%v\n", (*singleChild).(*NPuzzleState).getStateIdentifier(), thisState.getStateIdentifier())
+				if (*singleChild).(*NPuzzleState).getStateIdentifier() == thisState.getStateIdentifier() {
+					//fmt.Printf("Found child\n")
+					foundChild = true
+					break
+				}
+			}
+			if !foundChild {
+				return false
+			}
+		}
+		thisState = nextState
+	}
+
+	return true
 }

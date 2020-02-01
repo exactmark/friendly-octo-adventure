@@ -49,6 +49,7 @@ func mainBasicRun(seed int) {
 	nSize := 4
 	var startState SequentialInterface
 
+	//seed n4,seed2,shuf250 is solving via a* in 20 seconds, 53 steps.
 	rand.Seed(int64(seed))
 
 	startState = createStartState(nSize, 250)
@@ -62,9 +63,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	solvedList := mySolver.solveAStar(&startState)
+	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
 
 
 	//for _, singleNode := range *solvedList {
@@ -76,8 +77,13 @@ func mainBasicRun(seed int) {
 	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
 
 	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
-	//mySolver=nil
-	//startState=nil
+
+	if validateSolution(solvedList){
+		fmt.Printf("Found solution is valid.\n")
+	}else{
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+
 }
 
 func mainLargeRun(seed int) {
@@ -88,7 +94,7 @@ func mainLargeRun(seed int) {
 	// potentially different. This explains the difference in solve times on
 	// A* but does not really explain why different seeds will crash.
 
-	nSize := 5
+	nSize := 4
 	var startState SequentialInterface
 
 	rand.Seed(int64(seed))
@@ -118,7 +124,23 @@ func mainLargeRun(seed int) {
 	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
 
 	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
-	//mySolver=nil
-	//startState=nil
+
+	if validateSolution(solvedList){
+		fmt.Printf("Found solution is valid.\n")
+	}else{
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+
 }
 
+func validateSolution(solutionList *[]*SequentialInterface ) bool{
+	switch (*(*solutionList)[0]).(type) {
+	case *NPuzzleState:
+		// here v has type T
+		//return (*(*solutionList)[len(*solutionList)-1]).(*NPuzzleState).testSolution()
+		return (*(*solutionList)[0]).(*NPuzzleState).testSolution()
+	default:
+		// no match; here v has the same type as i
+	}
+	return false
+}

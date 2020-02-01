@@ -23,7 +23,7 @@ func createSolver() *Solver {
 		solutionMemo: solutionMemo,
 		memoQueue:    memoQueue,
 		memoSuccess:  0,
-		debugLog:  false,
+		debugLog:     false,
 	}
 
 	return &returnedSolver
@@ -131,8 +131,6 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 	}
 	partialSolutionDNA := (*((*solutionList)[startIndex])).createSequentialState((*((*solutionList)[endIndex])).exportCurrentState(), (*((*solutionList)[startIndex])).exportCurrentState())
 
-	//(*partialSolutionDNA).(*NPuzzleState).printCurrentPuzzleState()
-	//(*partialSolutionDNA).(*NPuzzleState).printCurrentGoalState()
 	solutionTail := solver.solve(partialSolutionDNA, false)
 	envelopeChannel <- solutionEnvelope{
 		position:     envelopePosition,
@@ -153,6 +151,7 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	endIndex = len(*currentSolution)
 	currentInc := startInc
 
+	//This function is way too long.
 	for currentInc < lastInc {
 		oldSolutionLen := len(*currentSolution)
 		solutionPart := 0
@@ -195,6 +194,9 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 		if solver.debugLog {
 			fmt.Printf("found parts...\n")
 		}
+
+		solver.spliceOutRepeatedLoops(lastNode)
+
 		currentSolution = makeTrackbackArray(lastNode)
 		newSolutionLength := len(*currentSolution)
 		if newSolutionLength < oldSolutionLen {
@@ -209,13 +211,36 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 				(*val).(*NPuzzleState).printCurrentPuzzleState()
 			}
 		}
+
 		endIndex = len(*currentSolution)
 
 	}
-if solver.debugLog{
-	fmt.Printf("last solution len %v\n", len(*currentSolution))
-}
+	if solver.debugLog {
+		fmt.Printf("last solution len %v\n", len(*currentSolution))
+	}
 	return currentSolution
+}
+
+func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) {
+
+	uniqueMap := make(map[string]*SequentialInterface, 0)
+	doubles:=make([][]*SequentialInterface,0)
+	nextNode := (*node).getParent()
+	for nextNode != nil {
+		laterNode, ok := uniqueMap[(*nextNode).getStateIdentifier()]
+		if ok {
+			fmt.Printf("found repeat\n")
+			thisPair:=make([]*SequentialInterface,0)
+			thisPair=append(thisPair,laterNode)
+			thisPair=append(thisPair, nextNode)
+			doubles=append(doubles,thisPair)
+		//	todo do pointer repoint. Maybe stick in loop until no repeats found
+		}else {
+			uniqueMap[(*nextNode).getStateIdentifier()] = nextNode
+		}
+		nextNode=(*nextNode).getParent()
+	}
+
 }
 
 func pointHeadAtLastNode(thisNode *SequentialInterface, lastNode *SequentialInterface) {
