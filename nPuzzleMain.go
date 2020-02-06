@@ -16,6 +16,7 @@ type SequentialInterface interface {
 	getH() int
 	getExpectedCost() int
 	getStateIdentifier() string
+	getGoalIdentifier() string
 	isGoal() bool
 	isValidMove(singleMove rune) bool
 	makeMove(singleMove rune) bool
@@ -32,8 +33,8 @@ func describe(i interface{}) {
 
 func main() {
 	for x := 1; x < 8; x++ {
-		//mainBasicRun(2)
-		mainLargeRun(2)
+		mainBasicRun(2)
+		//mainLargeRun(x)
 	}
 	//mainBasicRun(4)
 }
@@ -99,7 +100,7 @@ func mainLargeRun(seed int) {
 
 	rand.Seed(int64(seed))
 
-	startState = createStartState(nSize, 1000)
+	startState = createStartState(nSize, 10000)
 
 	startTime := time.Now()
 	//startState.(*NPuzzleState).printCurrentPuzzleState()

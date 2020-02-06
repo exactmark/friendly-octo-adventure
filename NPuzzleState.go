@@ -172,6 +172,27 @@ func (s *NPuzzleState) getExpectedCost() int {
 	return s.cost + s.getH()
 }
 
+func (s *NPuzzleState) getGoalIdentifier() string {
+	//if s.stateIdentifierCreated {
+	//
+	//} else {
+		stateId := ""
+		for y := 0; y < s.nSize; y++ {
+			subStrings := make([]string, 0)
+			for x := 0; x < s.nSize; x++ {
+				//singleChar := strconv.Itoa(s.puzzleState[y][x])
+				//fmt.Printf("singlechar %v\n",singleChar)
+				subStrings = append(subStrings, strconv.Itoa((*s.goalState)[y][x])+",")
+			}
+			stateId += strings.Join(subStrings, ",")
+		}
+		//s.stateIdentifier = stateId
+		//s.stateIdentifierCreated = true
+		//fmt.Printf("StateIdentifier %v\n",s.stateIdentifier)
+	//}
+	return stateId
+}
+
 func (s *NPuzzleState) getStateIdentifier() string {
 	if s.stateIdentifierCreated {
 
