@@ -3,11 +3,31 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"sync"
 )
+
+type SequentialInterface interface {
+	lt(other *SequentialInterface) bool
+	getChildren() []*SequentialInterface
+	getH() int
+	getExpectedCost() int
+	getStateIdentifier() string
+	getGoalIdentifier() string
+	isGoal() bool
+	isValidMove(singleMove rune) bool
+	makeMove(singleMove rune) bool
+	shuffle(shuffleAmount int)
+	getParent() *SequentialInterface
+	createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface
+	exportCurrentState() interface{}
+	setParent(node *SequentialInterface)
+	strandDeepCopy() *SequentialInterface
+}
 
 type Solver struct {
 	solutionMemo map[string]*SequentialInterface
 	memoQueue    []*SequentialInterface
+	memoLock     sync.Mutex
 	memoSuccess  int
 	greedy       bool
 	debugLog     bool
@@ -77,8 +97,10 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 	} else {
 		priority = (*startState).getExpectedCost()
 		memoId = (*startState).getStateIdentifier() + "sep" + (*startState).getGoalIdentifier()
-		//todo this needs a mutex
+
+		solver.memoLock.Lock()
 		val, ok := solver.solutionMemo[memoId]
+		solver.memoLock.Unlock()
 		if ok {
 			return val
 		}
@@ -95,8 +117,10 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		if exploringNode.isGoal() {
 			if !greedy {
 				//fmt.Printf(memoId+"\n")
-				//todo this needs a mutex
-				solver.solutionMemo[memoId] = &exploringNode
+
+				solver.memoLock.Lock()
+				solver.solutionMemo[memoId] = exploringNode.strandDeepCopy()
+				solver.memoLock.Unlock()
 			}
 			return &exploringNode
 		}

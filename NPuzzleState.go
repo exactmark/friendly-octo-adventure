@@ -176,19 +176,19 @@ func (s *NPuzzleState) getGoalIdentifier() string {
 	//if s.stateIdentifierCreated {
 	//
 	//} else {
-		stateId := ""
-		for y := 0; y < s.nSize; y++ {
-			subStrings := make([]string, 0)
-			for x := 0; x < s.nSize; x++ {
-				//singleChar := strconv.Itoa(s.puzzleState[y][x])
-				//fmt.Printf("singlechar %v\n",singleChar)
-				subStrings = append(subStrings, strconv.Itoa((*s.goalState)[y][x])+",")
-			}
-			stateId += strings.Join(subStrings, ",")
+	stateId := ""
+	for y := 0; y < s.nSize; y++ {
+		subStrings := make([]string, 0)
+		for x := 0; x < s.nSize; x++ {
+			//singleChar := strconv.Itoa(s.puzzleState[y][x])
+			//fmt.Printf("singlechar %v\n",singleChar)
+			subStrings = append(subStrings, strconv.Itoa((*s.goalState)[y][x])+",")
 		}
-		//s.stateIdentifier = stateId
-		//s.stateIdentifierCreated = true
-		//fmt.Printf("StateIdentifier %v\n",s.stateIdentifier)
+		stateId += strings.Join(subStrings, ",")
+	}
+	//s.stateIdentifier = stateId
+	//s.stateIdentifierCreated = true
+	//fmt.Printf("StateIdentifier %v\n",s.stateIdentifier)
 	//}
 	return stateId
 }
@@ -272,7 +272,7 @@ func getArrayFromFlatState(nSize int, startList []int) *[][]int {
 	}
 }
 
-func createStartState(nSize int, initShuffleAmount int) *NPuzzleState {
+func createNPuzzleStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	var goalState *[][]int
 
 	goalState = getBasicGoalState(nSize)
@@ -396,4 +396,41 @@ func (s *NPuzzleState) testSolution() bool {
 	}
 
 	return true
+}
+
+func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
+
+	var pointToCopy SequentialInterface
+	pointToCopy = s
+	var startPoint SequentialInterface
+	startPoint = pointToCopy
+
+	var lastPoint *NPuzzleState
+
+	for pointToCopy != nil {
+		var newCopy SequentialInterface
+		newCopy = pointToCopy.(NPuzzleState)
+		newCopy.(NPuzzleState).currentH = -1
+		newCopy.(NPuzzleState).puzzleState = make([][]int, s.nSize)
+		for y := 0; y < s.nSize; y++ {
+			newCopy.(*NPuzzleState).puzzleState[y] = make([]int, s.nSize)
+			copy(newCopy.(*NPuzzleState).puzzleState[y], newCopy.(*NPuzzleState).puzzleState[y])
+		}
+
+		newCopy.(*NPuzzleState).stateIdentifierCreated = false
+		if lastPoint != nil {
+			lastPoint.parent = &newCopy
+		}
+		lastPoint = (newCopy.(*NPuzzleState))
+		if pointToCopy.(*NPuzzleState).parent == nil {
+			pointToCopy = nil
+		} else {
+			pointToCopy = *(pointToCopy).getParent()
+		}
+	}
+
+	if startPoint==nil{
+		panic("No copy made")
+	}
+	return &startPoint
 }

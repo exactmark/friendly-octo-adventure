@@ -4,28 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-
-	//"math"
-	//"math/rand"
-	//"strings"
 )
-
-type SequentialInterface interface {
-	lt(other *SequentialInterface) bool
-	getChildren() []*SequentialInterface
-	getH() int
-	getExpectedCost() int
-	getStateIdentifier() string
-	getGoalIdentifier() string
-	isGoal() bool
-	isValidMove(singleMove rune) bool
-	makeMove(singleMove rune) bool
-	shuffle(shuffleAmount int)
-	getParent() *SequentialInterface
-	createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface
-	exportCurrentState() interface{}
-	setParent(node *SequentialInterface)
-}
 
 func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
@@ -53,7 +32,7 @@ func mainBasicRun(seed int) {
 	//seed n4,seed2,shuf250 is solving via a* in 20 seconds, 53 steps.
 	rand.Seed(int64(seed))
 
-	startState = createStartState(nSize, 250)
+	startState = createNPuzzleStartState(nSize, 250)
 
 	startTime := time.Now()
 	//startState.(*NPuzzleState).printCurrentPuzzleState()
@@ -68,7 +47,6 @@ func mainBasicRun(seed int) {
 	//solvedList:=mySolver.solveGreedy(&startState)
 	solvedList := mySolver.greedyGuidedAStar(&startState)
 
-
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
 	//	thisState = (*singleNode).(*NPuzzleState)
@@ -79,9 +57,9 @@ func mainBasicRun(seed int) {
 
 	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
 
-	if validateSolution(solvedList){
+	if validateSolution(solvedList) {
 		fmt.Printf("Found solution is valid.\n")
-	}else{
+	} else {
 		fmt.Printf("Found solution is NOT valid.\n")
 	}
 
@@ -100,7 +78,7 @@ func mainLargeRun(seed int) {
 
 	rand.Seed(int64(seed))
 
-	startState = createStartState(nSize, 10000)
+	startState = createNPuzzleStartState(nSize, 10000)
 
 	startTime := time.Now()
 	//startState.(*NPuzzleState).printCurrentPuzzleState()
@@ -115,7 +93,6 @@ func mainLargeRun(seed int) {
 	//solvedList:=mySolver.solveGreedy(&startState)
 	solvedList := mySolver.greedyGuidedAStar(&startState)
 
-
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
 	//	thisState = (*singleNode).(*NPuzzleState)
@@ -126,15 +103,15 @@ func mainLargeRun(seed int) {
 
 	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
 
-	if validateSolution(solvedList){
+	if validateSolution(solvedList) {
 		fmt.Printf("Found solution is valid.\n")
-	}else{
+	} else {
 		fmt.Printf("Found solution is NOT valid.\n")
 	}
 
 }
 
-func validateSolution(solutionList *[]*SequentialInterface ) bool{
+func validateSolution(solutionList *[]*SequentialInterface) bool {
 	switch (*(*solutionList)[0]).(type) {
 	case *NPuzzleState:
 		// here v has type T
