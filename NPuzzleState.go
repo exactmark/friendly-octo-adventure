@@ -402,26 +402,20 @@ func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
 
 	var pointToCopy SequentialInterface
 	pointToCopy = s
-	var startPoint SequentialInterface
-	startPoint = pointToCopy
 
-	var lastPoint *NPuzzleState
+	var lastPoint SequentialInterface
+	lastPoint = copyState(*s)
+
+	returnSequence:=make([]*SequentialInterface,0)
+	returnSequence=append(returnSequence,&lastPoint)
+
+	pointToCopy = *((s).getParent())
 
 	for pointToCopy != nil {
 		var newCopy SequentialInterface
-		newCopy = pointToCopy.(NPuzzleState)
-		newCopy.(NPuzzleState).currentH = -1
-		newCopy.(NPuzzleState).puzzleState = make([][]int, s.nSize)
-		for y := 0; y < s.nSize; y++ {
-			newCopy.(*NPuzzleState).puzzleState[y] = make([]int, s.nSize)
-			copy(newCopy.(*NPuzzleState).puzzleState[y], newCopy.(*NPuzzleState).puzzleState[y])
-		}
+		newCopy = copyState(*(pointToCopy.(*NPuzzleState)))
 
-		newCopy.(*NPuzzleState).stateIdentifierCreated = false
-		if lastPoint != nil {
-			lastPoint.parent = &newCopy
-		}
-		lastPoint = (newCopy.(*NPuzzleState))
+		returnSequence=append(returnSequence,&newCopy)
 		if pointToCopy.(*NPuzzleState).parent == nil {
 			pointToCopy = nil
 		} else {
@@ -429,8 +423,22 @@ func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
 		}
 	}
 
-	if startPoint==nil{
-		panic("No copy made")
+	for x:=0;x<len(returnSequence)-1 ;x++  {
+		(*returnSequence[x]).setParent(returnSequence[x+1])
 	}
-	return &startPoint
+	(*returnSequence[len(returnSequence)-1]).setParent(nil)
+
+	return returnSequence[0]
+}
+
+func copyState(source NPuzzleState) *NPuzzleState {
+
+	var newCopy NPuzzleState
+	newCopy = source
+	newCopy.puzzleState = make([][]int, source.nSize)
+	for y := 0; y < source.nSize; y++ {
+		newCopy.puzzleState[y] = make([]int, source.nSize)
+		copy(newCopy.puzzleState[y], source.puzzleState[y])
+	}
+	return &newCopy
 }

@@ -102,7 +102,7 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		val, ok := solver.solutionMemo[memoId]
 		solver.memoLock.Unlock()
 		if ok {
-			return val
+			return (*val).strandDeepCopy()
 		}
 	}
 	frontierQueue.PushSequentialInterface(startState, priority)
