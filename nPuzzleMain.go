@@ -12,8 +12,8 @@ func describe(i interface{}) {
 
 func main() {
 	for x := 1; x < 8; x++ {
-		mainBasicRun(2)
-		//mainLargeRun(x)
+		//mainBasicRun(2)
+		mainLargeRun(x)
 	}
 	//mainBasicRun(4)
 }

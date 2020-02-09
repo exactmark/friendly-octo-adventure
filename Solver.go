@@ -120,6 +120,10 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 
 				solver.memoLock.Lock()
 				solver.solutionMemo[memoId] = exploringNode.strandDeepCopy()
+				solver.memoSuccess++
+				if solver.memoSuccess%10000 == 0 {
+					fmt.Printf("Memosuccess: %v\n", solver.memoSuccess)
+				}
 				solver.memoLock.Unlock()
 			}
 			return &exploringNode
@@ -187,7 +191,6 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 
 	//This function is way too long.
 	for currentInc < lastInc {
-		//lastInc=len(*currentSolution)
 		oldSolutionLen := len(*currentSolution)
 		solutionPart := 0
 		envelopeChannel := make(chan solutionEnvelope, 0)
@@ -230,8 +233,9 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 		if solver.debugLog {
 			fmt.Printf("found parts...\n")
 		}
+		for solver.spliceOutRepeatedLoops(lastNode) {
 
-		//solver.spliceOutRepeatedLoops(lastNode)
+		}
 
 		currentSolution = makeTrackbackArray(lastNode)
 		newSolutionLength := len(*currentSolution)
@@ -239,8 +243,9 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			currentInc = startInc
 			stepper = 0
+			lastInc = len(*currentSolution) / 2
 		} else {
-			fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 
 			if stepper == currentInc-1 {
 				currentInc++
@@ -266,25 +271,23 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	return currentSolution
 }
 
-func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) {
+func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
 
 	uniqueMap := make(map[string]*SequentialInterface, 0)
-	doubles := make([][]*SequentialInterface, 0)
-	nextNode := (*node).getParent()
-	for nextNode != nil {
-		laterNode, ok := uniqueMap[(*nextNode).getStateIdentifier()]
+	//doubles := make([][]*SequentialInterface, 0)
+	inspectedNode := (*node).getParent()
+	for inspectedNode != nil {
+		earlierNode, ok := uniqueMap[(*inspectedNode).getStateIdentifier()]
 		if ok {
 			fmt.Printf("found repeat\n")
-			thisPair := make([]*SequentialInterface, 0)
-			thisPair = append(thisPair, laterNode)
-			thisPair = append(thisPair, nextNode)
-			doubles = append(doubles, thisPair)
-			//	todo do pointer repoint. Maybe stick in loop until no repeats found
+			(*earlierNode).setParent((*inspectedNode).getParent())
+			return true
 		} else {
-			uniqueMap[(*nextNode).getStateIdentifier()] = nextNode
+			uniqueMap[(*inspectedNode).getStateIdentifier()] = inspectedNode
 		}
-		nextNode = (*nextNode).getParent()
+		inspectedNode = (*inspectedNode).getParent()
 	}
+	return false
 
 }
 
