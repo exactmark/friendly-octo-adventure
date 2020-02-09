@@ -25,6 +25,7 @@ type SequentialInterface interface {
 }
 
 type Solver struct {
+	useMemo      bool
 	solutionMemo map[string]*SequentialInterface
 	memoQueue    []*SequentialInterface
 	memoLock     sync.Mutex
@@ -41,6 +42,7 @@ func createSolver() *Solver {
 
 	returnedSolver := Solver{
 		solutionMemo: solutionMemo,
+		useMemo:      false,
 		memoQueue:    memoQueue,
 		memoSuccess:  0,
 		debugLog:     false,
@@ -98,11 +100,13 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 		priority = (*startState).getExpectedCost()
 		memoId = (*startState).getStateIdentifier() + "sep" + (*startState).getGoalIdentifier()
 
-		solver.memoLock.Lock()
-		val, ok := solver.solutionMemo[memoId]
-		solver.memoLock.Unlock()
-		if ok {
-			return (*val).strandDeepCopy()
+		if solver.useMemo {
+			solver.memoLock.Lock()
+			val, ok := solver.solutionMemo[memoId]
+			solver.memoLock.Unlock()
+			if ok {
+				return (*val).strandDeepCopy()
+			}
 		}
 	}
 	frontierQueue.PushSequentialInterface(startState, priority)
@@ -115,13 +119,13 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 	for frontierQueue.Len() > 0 {
 		exploringNode := *frontierQueue.PopSequentialInterface()
 		if exploringNode.isGoal() {
-			if !greedy {
+			if !greedy && solver.useMemo {
 				//fmt.Printf(memoId+"\n")
 
 				solver.memoLock.Lock()
 				solver.solutionMemo[memoId] = exploringNode.strandDeepCopy()
 				solver.memoSuccess++
-				if solver.memoSuccess%10000 == 0 {
+				if solver.memoSuccess%1000 == 0 {
 					fmt.Printf("Memosuccess: %v\n", solver.memoSuccess)
 				}
 				solver.memoLock.Unlock()
@@ -180,7 +184,12 @@ func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialIn
 }
 
 func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
-	currentSolution := makeTrackbackArray(solver.solve(s, true))
+
+	initialSolution := solver.solve(s, true)
+	for solver.spliceOutRepeatedLoops(initialSolution) {
+
+	}
+	currentSolution := makeTrackbackArray(initialSolution)
 	if solver.debugLog {
 		fmt.Printf("initial solution is length %v\n", len(*currentSolution))
 	}
@@ -233,9 +242,6 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 		if solver.debugLog {
 			fmt.Printf("found parts...\n")
 		}
-		for solver.spliceOutRepeatedLoops(lastNode) {
-
-		}
 
 		currentSolution = makeTrackbackArray(lastNode)
 		newSolutionLength := len(*currentSolution)
@@ -243,6 +249,11 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			currentInc = startInc
 			stepper = 0
+			for solver.spliceOutRepeatedLoops(lastNode) {
+
+			}
+			currentSolution = makeTrackbackArray(lastNode)
+			newSolutionLength = len(*currentSolution)
 			lastInc = len(*currentSolution) / 2
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
