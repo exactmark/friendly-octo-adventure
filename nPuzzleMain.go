@@ -73,6 +73,8 @@ func mainLargeRun(seed int) {
 	// potentially different. This explains the difference in solve times on
 	// A* but does not really explain why different seeds will crash.
 
+	fmt.Printf("Starting solver.\n")
+
 	nSize := 4
 	var startState SequentialInterface
 
@@ -108,6 +110,8 @@ func mainLargeRun(seed int) {
 	} else {
 		fmt.Printf("Found solution is NOT valid.\n")
 	}
+
+	fmt.Printf("\n")
 
 }
 

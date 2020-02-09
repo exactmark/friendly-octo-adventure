@@ -186,12 +186,16 @@ func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialIn
 func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
 
 	initialSolution := solver.solve(s, true)
+	currentSolution := makeTrackbackArray(initialSolution)
+	//if solver.debugLog {
+	fmt.Printf("initial solution is length %v\n", len(*currentSolution))
+//}
 	for solver.spliceOutRepeatedLoops(initialSolution) {
 
 	}
-	currentSolution := makeTrackbackArray(initialSolution)
+	currentSolution = makeTrackbackArray(initialSolution)
 	if solver.debugLog {
-		fmt.Printf("initial solution is length %v\n", len(*currentSolution))
+		fmt.Printf("loopless initial solution is length %v\n", len(*currentSolution))
 	}
 	var endIndex int
 	endIndex = len(*currentSolution)
