@@ -1,19 +1,34 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"time"
 )
 
 func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
-	for x := 1; x < 2; x++ {
-		mainBasicRun(2)
-		//mainLargeRun(x)
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+	for x := 0; x < 12; x++ {
+		//mainBasicRun(0)
+		mainLargeRun(x)
+		//mainProfileRun(x)
 	}
 	//mainBasicRun(4)
 }
@@ -43,9 +58,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	solvedList := mySolver.solveAStar(&startState)
+	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
@@ -82,6 +97,8 @@ func mainLargeRun(seed int) {
 
 	startState = createNPuzzleStartState(nSize, 10000)
 
+	//startState = createNPuzzleStartState(nSize, 250)
+
 	startTime := time.Now()
 	//startState.(*NPuzzleState).printCurrentPuzzleState()
 	//startState.(*NPuzzleState).printCurrentGoalState()
@@ -114,6 +131,58 @@ func mainLargeRun(seed int) {
 	fmt.Printf("\n")
 
 }
+
+func mainProfileRun(seed int) {
+	// this is the current standard for my profiling runs on the desktop, using
+	//loop values of
+	//for x := 0; x < 12; x++ {
+	//	mainProfileRun(x)
+	//}
+
+	fmt.Printf("Starting solver.\n")
+
+	nSize := 4
+	var startState SequentialInterface
+
+	rand.Seed(int64(seed))
+
+	startState = createNPuzzleStartState(nSize, 10000)
+
+	//startState = createNPuzzleStartState(nSize, 250)
+
+	startTime := time.Now()
+	//startState.(*NPuzzleState).printCurrentPuzzleState()
+	//startState.(*NPuzzleState).printCurrentGoalState()
+	//describe(startState)
+
+	mySolver := createSolver()
+
+	//mySolver.solve(&startState, false)
+
+	//solvedList := mySolver.solveAStar(&startState)
+	//solvedList:=mySolver.solveGreedy(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
+
+	//for _, singleNode := range *solvedList {
+	//	var thisState *NPuzzleState
+	//	thisState = (*singleNode).(*NPuzzleState)
+	//	thisState.printCurrentPuzzleState()
+	//}
+
+	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
+
+	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
+
+	if validateSolution(solvedList) {
+		fmt.Printf("Found solution is valid.\n")
+	} else {
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+
+	fmt.Printf("\n")
+
+}
+
 
 func validateSolution(solutionList *[]*SequentialInterface) bool {
 	switch (*(*solutionList)[0]).(type) {

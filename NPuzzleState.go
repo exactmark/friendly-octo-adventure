@@ -198,6 +198,31 @@ func (s *NPuzzleState) getStateIdentifier() string {
 
 	} else {
 		stateId := ""
+		stateParts := make([]string, s.nSize)
+		for y := 0; y < s.nSize; y++ {
+			rowConcat := s.puzzleState[y][0]
+			for x := 1; x < s.nSize; x++ {
+				rowConcat = rowConcat * 100
+				rowConcat = rowConcat + s.puzzleState[y][x]
+			}
+			stateParts = append(stateParts, strconv.Itoa(rowConcat))
+		}
+		stateId = strings.Join(stateParts, ",")
+		s.stateIdentifier = stateId
+		s.stateIdentifierCreated = true
+		//fmt.Printf("StateIdentifier %v\n",s.stateIdentifier)
+	}
+	return s.stateIdentifier
+}
+
+// getStateIdentifier should actually make a string for each line, then concat.
+// string making is expensive.
+// also omg https://blog.golang.org/profiling-go-programs
+func (s *NPuzzleState) getStateIdentifierOld() string {
+	if s.stateIdentifierCreated {
+
+	} else {
+		stateId := ""
 		for y := 0; y < s.nSize; y++ {
 			subStrings := make([]string, 0)
 			for x := 0; x < s.nSize; x++ {
@@ -390,8 +415,8 @@ func (s *NPuzzleState) testSolution() bool {
 			}
 			if !foundChild {
 				fmt.Printf("BadStep\n")
-				fmt.Printf(s.stateIdentifier+"\n")
-				fmt.Printf((*s.getParent()).getStateIdentifier()+"\n\n")
+				fmt.Printf(s.stateIdentifier + "\n")
+				fmt.Printf((*s.getParent()).getStateIdentifier() + "\n\n")
 				return false
 			}
 		}
@@ -409,10 +434,10 @@ func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
 	var lastPoint SequentialInterface
 	lastPoint = copyState(*s)
 
-	returnSequence:=make([]*SequentialInterface,0)
-	returnSequence=append(returnSequence,&lastPoint)
+	returnSequence := make([]*SequentialInterface, 0)
+	returnSequence = append(returnSequence, &lastPoint)
 
-	if s.getParent()==nil{
+	if s.getParent() == nil {
 		return &lastPoint
 	}
 
@@ -422,7 +447,7 @@ func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
 		var newCopy SequentialInterface
 		newCopy = copyState(*(pointToCopy.(*NPuzzleState)))
 
-		returnSequence=append(returnSequence,&newCopy)
+		returnSequence = append(returnSequence, &newCopy)
 		if pointToCopy.(*NPuzzleState).parent == nil {
 			pointToCopy = nil
 		} else {
@@ -430,7 +455,7 @@ func (s *NPuzzleState) strandDeepCopy() *SequentialInterface {
 		}
 	}
 
-	for x:=0;x<len(returnSequence)-1 ;x++  {
+	for x := 0; x < len(returnSequence)-1; x++ {
 		(*returnSequence[x]).setParent(returnSequence[x+1])
 	}
 	(*returnSequence[len(returnSequence)-1]).setParent(nil)

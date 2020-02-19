@@ -194,7 +194,7 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 }
 
 func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialInterface {
-	return solver.greedyGuidedAStarWithArgs(s, 9, 25)
+	return solver.greedyGuidedAStarWithArgs(s, 4, 25)
 }
 
 func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
@@ -310,18 +310,19 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			for solver.spliceOutRepeatedLoops(lastNode) {
 				currentSolution = makeTrackbackArray(lastNode)
 				newSolutionLength = len(*currentSolution)
-				fmt.Printf("After splice: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+				//fmt.Printf("After splice: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			}
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
 			lastInc = len(*currentSolution) / 2
-			fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
+			//fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 
 			if stepper == currentInc-1 {
 				currentInc++
 				stepper = 0
+				//fmt.Printf("New currentInc: %v\n",currentInc)
 			} else {
 				stepper++
 			}
@@ -343,6 +344,12 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	return currentSolution
 }
 
+//spliceOutRepeatedLoops will currently go through each state, find the first repeat
+// and point the first node to the child of the second node.
+// This lends itself to removing very simple useless moves where a state is tried then
+// immediately backed out, i.e. **ABA***.
+// However, consider the case of **ABAC******BDEF*** . In this case, the FirstA will
+// now point to FirstC, however a better splice would be to point FirstB to FirstD.
 func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
 
 	uniqueMap := make(map[string]*SequentialInterface, 0)
@@ -351,7 +358,7 @@ func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
 	for inspectedNode != nil {
 		earlierNode, ok := uniqueMap[(*inspectedNode).getStateIdentifier()]
 		if ok {
-			fmt.Printf("found repeat\n")
+			//fmt.Printf("found repeat\n")
 			(*earlierNode).setParent((*inspectedNode).getParent())
 			return true
 		} else {
