@@ -389,6 +389,9 @@ func (s *NPuzzleState) testSolution() bool {
 				}
 			}
 			if !foundChild {
+				fmt.Printf("BadStep\n")
+				fmt.Printf(s.stateIdentifier+"\n")
+				fmt.Printf((*s.getParent()).getStateIdentifier()+"\n\n")
 				return false
 			}
 		}

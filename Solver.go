@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -26,8 +27,7 @@ type SequentialInterface interface {
 
 type Solver struct {
 	useMemo      bool
-	solutionMemo map[string]*SequentialInterface
-	memoQueue    []*SequentialInterface
+	solutionMemo map[string]int
 	memoLock     sync.Mutex
 	memoSuccess  int
 	greedy       bool
@@ -37,13 +37,12 @@ type Solver struct {
 //createSolver will initialize a solver state and return a pointer to it.
 func createSolver() *Solver {
 
-	memoQueue := make([]*SequentialInterface, 0)
-	solutionMemo := make(map[string]*SequentialInterface)
+	//memoQueue := make([]*SequentialInterface, 0)
+	solutionMemo := make(map[string]int)
 
 	returnedSolver := Solver{
 		solutionMemo: solutionMemo,
-		useMemo:      false,
-		memoQueue:    memoQueue,
+		useMemo:      true,
 		memoSuccess:  0,
 		debugLog:     false,
 	}
@@ -60,6 +59,10 @@ func makeTrackbackArray(tailNode *SequentialInterface) *[]*SequentialInterface {
 	for thisNode != nil {
 		returnArray = append(returnArray, thisNode)
 		thisNode = (*thisNode).getParent()
+	}
+
+	for i, j := 0, len(returnArray)-1; i < j; i, j = i+1, j-1 {
+		returnArray[i], returnArray[j] = returnArray[j], returnArray[i]
 	}
 
 	return &returnArray
@@ -91,23 +94,13 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 	frontierQueue := make(PriorityQueue, 0)
 
 	exploredStateCache := make(map[string]*SequentialInterface, 0)
-	var memoId string
+	//var memoId string
 	heap.Init(&frontierQueue)
 	var priority int
 	if greedy {
 		priority = (*startState).getH()
 	} else {
 		priority = (*startState).getExpectedCost()
-		memoId = (*startState).getStateIdentifier() + "sep" + (*startState).getGoalIdentifier()
-
-		if solver.useMemo {
-			solver.memoLock.Lock()
-			val, ok := solver.solutionMemo[memoId]
-			solver.memoLock.Unlock()
-			if ok {
-				return (*val).strandDeepCopy()
-			}
-		}
 	}
 	frontierQueue.PushSequentialInterface(startState, priority)
 
@@ -119,17 +112,6 @@ func (solver *Solver) solve(startState *SequentialInterface, greedy bool) *Seque
 	for frontierQueue.Len() > 0 {
 		exploringNode := *frontierQueue.PopSequentialInterface()
 		if exploringNode.isGoal() {
-			if !greedy && solver.useMemo {
-				//fmt.Printf(memoId+"\n")
-
-				solver.memoLock.Lock()
-				solver.solutionMemo[memoId] = exploringNode.strandDeepCopy()
-				solver.memoSuccess++
-				if solver.memoSuccess%1000 == 0 {
-					fmt.Printf("Memosuccess: %v\n", solver.memoSuccess)
-				}
-				solver.memoLock.Unlock()
-			}
 			return &exploringNode
 		}
 		exploredStateCache[exploringNode.getStateIdentifier()] = &exploringNode
@@ -167,6 +149,30 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 		startIndex = 0
 	}
 
+	memoId := (*((*solutionList)[startIndex])).getStateIdentifier() + "sep" + (*((*solutionList)[endIndex])).getStateIdentifier()
+
+	if solver.useMemo {
+		solver.memoLock.Lock()
+		_, ok := solver.solutionMemo[memoId]
+		//solver.memoLock.Unlock()
+		if ok {
+			(*((*solutionList)[startIndex])).setParent(nil)
+			//fmt.Printf("Sending cached\n")
+			//fmt.Printf((*(*solutionList)[startIndex]).getStateIdentifier() + "\n")
+			//
+			//fmt.Printf((*(*solutionList)[endIndex]).getStateIdentifier() + "\n\n")
+
+			envelopeChannel <- solutionEnvelope{
+				position:     envelopePosition,
+				solutionTail: ((*solutionList)[endIndex]),
+			}
+			solver.memoLock.Unlock()
+
+			return
+		}
+		solver.memoLock.Unlock()
+
+	}
 	if solver.debugLog {
 		fmt.Printf("Finding solution for:\n pos %v\n start: %v\n end: %v\n", envelopePosition, startIndex, endIndex)
 	}
@@ -176,6 +182,12 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 	envelopeChannel <- solutionEnvelope{
 		position:     envelopePosition,
 		solutionTail: solutionTail,
+	}
+	if solver.useMemo {
+		trackback := makeTrackbackArray(solutionTail)
+		solver.memoLock.Lock()
+		solver.solutionMemo[memoId] = len(*trackback)
+		solver.memoLock.Unlock()
 	}
 }
 
@@ -189,7 +201,7 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	currentSolution := makeTrackbackArray(initialSolution)
 	//if solver.debugLog {
 	fmt.Printf("initial solution is length %v\n", len(*currentSolution))
-//}
+	//}
 	for solver.spliceOutRepeatedLoops(initialSolution) {
 
 	}
@@ -201,6 +213,10 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	endIndex = len(*currentSolution)
 	currentInc := startInc
 	stepper := 0
+
+	goal_state := (*(*currentSolution)[0]).getStateIdentifier()
+
+	start_state := (*(*currentSolution)[endIndex-1]).getStateIdentifier()
 
 	//This function is way too long.
 	for currentInc < lastInc {
@@ -249,7 +265,43 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 
 		currentSolution = makeTrackbackArray(lastNode)
 		newSolutionLength := len(*currentSolution)
-		if newSolutionLength < oldSolutionLen {
+		if !validateSolution(currentSolution) {
+			for _, node := range *currentSolution {
+				fmt.Printf((*node).getStateIdentifier() + "\n")
+			}
+			fmt.Printf("bad solution\n")
+		}
+		if goal_state != (*(*currentSolution)[0]).getStateIdentifier() ||
+			start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier() {
+			for _, node := range *currentSolution {
+				fmt.Printf((*node).getStateIdentifier() + "\n")
+			}
+			fmt.Printf("StartState: %v\n", start_state)
+			fmt.Printf("GoalState: %v\n", goal_state)
+
+			fmt.Printf("goal_state_actual: %v\n", (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
+			fmt.Printf("0state_actual: %v\n", (*(*currentSolution)[0]).getStateIdentifier())
+
+			fmt.Printf("goalstate compare: %v\n", goal_state != (*(*currentSolution)[0]).getStateIdentifier())
+			fmt.Printf("startstate compare: %v\n",
+				start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
+
+
+			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[0]).getStateIdentifier()))
+			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
+
+			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
+			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[0]).getStateIdentifier()))
+			fmt.Printf("solution constants have changed\n")
+
+		}
+
+		if newSolutionLength > oldSolutionLen {
+			for _, node := range *currentSolution {
+				fmt.Printf((*node).getStateIdentifier() + "\n")
+			}
+			fmt.Printf("Solution length has grown.\n")
+		} else if newSolutionLength < oldSolutionLen {
 			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			currentInc = startInc
 			stepper = 0

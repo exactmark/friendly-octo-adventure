@@ -11,9 +11,9 @@ func describe(i interface{}) {
 }
 
 func main() {
-	for x := 1; x < 8; x++ {
-		//mainBasicRun(2)
-		mainLargeRun(x)
+	for x := 1; x < 2; x++ {
+		mainBasicRun(2)
+		//mainLargeRun(x)
 	}
 	//mainBasicRun(4)
 }
@@ -43,9 +43,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	//solvedList := mySolver.solveAStar(&startState)
+	solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	solvedList := mySolver.greedyGuidedAStar(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
