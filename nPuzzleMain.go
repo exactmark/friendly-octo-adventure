@@ -25,9 +25,9 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for x := 0; x < 12; x++ {
-		//mainBasicRun(0)
-		mainLargeRun(x)
+	for x := 0; x < 10; x++ {
+		mainBasicRun(0)
+		//mainLargeRun(x)
 		//mainProfileRun(x)
 	}
 	//mainBasicRun(4)
@@ -58,9 +58,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	//solvedList := mySolver.solveAStar(&startState)
+	solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	solvedList := mySolver.greedyGuidedAStar(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
