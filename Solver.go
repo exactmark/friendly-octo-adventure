@@ -30,6 +30,8 @@ type Solver struct {
 	solutionMemo map[string]int
 	memoLock     sync.Mutex
 	memoSuccess  int
+	cacheHit     int
+	cacheMiss    int
 	greedy       bool
 	debugLog     bool
 }
@@ -167,11 +169,11 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 				solutionTail: ((*solutionList)[endIndex]),
 			}
 			solver.memoLock.Unlock()
-
+			solver.cacheHit++
 			return
 		}
+		solver.cacheMiss++
 		solver.memoLock.Unlock()
-
 	}
 	if solver.debugLog {
 		fmt.Printf("Finding solution for:\n pos %v\n start: %v\n end: %v\n", envelopePosition, startIndex, endIndex)
@@ -265,37 +267,37 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 
 		currentSolution = makeTrackbackArray(lastNode)
 		newSolutionLength := len(*currentSolution)
-		if !validateSolution(currentSolution) {
-			for _, node := range *currentSolution {
-				fmt.Printf((*node).getStateIdentifier() + "\n")
+		if solver.debugLog {
+			if !validateSolution(currentSolution) {
+				for _, node := range *currentSolution {
+					fmt.Printf((*node).getStateIdentifier() + "\n")
+				}
+				fmt.Printf("bad solution\n")
 			}
-			fmt.Printf("bad solution\n")
-		}
-		if goal_state != (*(*currentSolution)[0]).getStateIdentifier() ||
-			start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier() {
-			for _, node := range *currentSolution {
-				fmt.Printf((*node).getStateIdentifier() + "\n")
+			if goal_state != (*(*currentSolution)[0]).getStateIdentifier() ||
+				start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier() {
+				for _, node := range *currentSolution {
+					fmt.Printf((*node).getStateIdentifier() + "\n")
+				}
+				fmt.Printf("StartState: %v\n", start_state)
+				fmt.Printf("GoalState: %v\n", goal_state)
+
+				fmt.Printf("goal_state_actual: %v\n", (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
+				fmt.Printf("0state_actual: %v\n", (*(*currentSolution)[0]).getStateIdentifier())
+
+				fmt.Printf("goalstate compare: %v\n", goal_state != (*(*currentSolution)[0]).getStateIdentifier())
+				fmt.Printf("startstate compare: %v\n",
+					start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
+
+				fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[0]).getStateIdentifier()))
+				fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
+
+				fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
+				fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[0]).getStateIdentifier()))
+				fmt.Printf("solution constants have changed\n")
+
 			}
-			fmt.Printf("StartState: %v\n", start_state)
-			fmt.Printf("GoalState: %v\n", goal_state)
-
-			fmt.Printf("goal_state_actual: %v\n", (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
-			fmt.Printf("0state_actual: %v\n", (*(*currentSolution)[0]).getStateIdentifier())
-
-			fmt.Printf("goalstate compare: %v\n", goal_state != (*(*currentSolution)[0]).getStateIdentifier())
-			fmt.Printf("startstate compare: %v\n",
-				start_state != (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier())
-
-
-			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[0]).getStateIdentifier()))
-			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(goal_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
-
-			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[newSolutionLength-1]).getStateIdentifier()))
-			fmt.Printf("GoalState COMPARE: %v\n", strings.Compare(start_state, (*(*currentSolution)[0]).getStateIdentifier()))
-			fmt.Printf("solution constants have changed\n")
-
 		}
-
 		if newSolutionLength > oldSolutionLen {
 			for _, node := range *currentSolution {
 				fmt.Printf((*node).getStateIdentifier() + "\n")
@@ -306,11 +308,14 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			currentInc = startInc
 			stepper = 0
 			for solver.spliceOutRepeatedLoops(lastNode) {
-
+				currentSolution = makeTrackbackArray(lastNode)
+				newSolutionLength = len(*currentSolution)
+				fmt.Printf("After splice: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			}
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
 			lastInc = len(*currentSolution) / 2
+			fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 
