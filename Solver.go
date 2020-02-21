@@ -197,7 +197,7 @@ func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialIn
 	return solver.greedyGuidedAStarWithArgs(s, 4, 25)
 }
 
-func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, lastInc int) *[]*SequentialInterface {
+func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, stopInc int) *[]*SequentialInterface {
 
 	initialSolution := solver.solve(s, true)
 	currentSolution := makeTrackbackArray(initialSolution)
@@ -216,12 +216,14 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	currentInc := startInc
 	stepper := 0
 
+	//highestCurrentInc := currentInc
+
 	goal_state := (*(*currentSolution)[0]).getStateIdentifier()
 
 	start_state := (*(*currentSolution)[endIndex-1]).getStateIdentifier()
 
 	//This function is way too long.
-	for currentInc < lastInc {
+	for currentInc < stopInc {
 		oldSolutionLen := len(*currentSolution)
 		solutionPart := 0
 		envelopeChannel := make(chan solutionEnvelope, 0)
@@ -304,7 +306,7 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			}
 			fmt.Printf("Solution length has grown.\n")
 		} else if newSolutionLength < oldSolutionLen {
-			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+			//fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			currentInc = startInc
 			stepper = 0
 			for solver.spliceOutRepeatedLoops(lastNode) {
@@ -314,7 +316,8 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			}
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
-			lastInc = len(*currentSolution) / 2
+			stopInc = len(*currentSolution) / 2
+			//stopInc = 40
 			//fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
@@ -322,6 +325,10 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			if stepper == currentInc-1 {
 				currentInc++
 				stepper = 0
+				//if currentInc > highestCurrentInc {
+				//	highestCurrentInc = currentInc
+				//	fmt.Printf("new highestCurrentInc %v\n", highestCurrentInc)
+				//}
 				//fmt.Printf("New currentInc: %v\n",currentInc)
 			} else {
 				stepper++

@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"time"
 )
@@ -13,6 +14,7 @@ import (
 func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
+
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
@@ -25,9 +27,9 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for x := 0; x < 10; x++ {
-		mainBasicRun(0)
-		//mainLargeRun(x)
+	for x := 0; x < 100; x++ {
+		//mainBasicRun(0)
+		mainLargeRun(x)
 		//mainProfileRun(x)
 	}
 	//mainBasicRun(4)
@@ -58,9 +60,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	solvedList := mySolver.solveAStar(&startState)
+	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
@@ -88,20 +90,20 @@ func mainLargeRun(seed int) {
 	// potentially different. This explains the difference in solve times on
 	// A* but does not really explain why different seeds will crash.
 
-	fmt.Printf("Starting solver.\n")
+	fmt.Printf("Starting solver for seed %v.\n", seed)
 
 	nSize := 4
 	var startState SequentialInterface
 
 	rand.Seed(int64(seed))
 
-	startState = createNPuzzleStartState(nSize, 10000)
+	startState = createNPuzzleStartState(nSize, 300)
 
 	//startState = createNPuzzleStartState(nSize, 250)
 
+	startState.(*NPuzzleState).printCurrentPuzzleState()
+	startState.(*NPuzzleState).printCurrentGoalState()
 	startTime := time.Now()
-	//startState.(*NPuzzleState).printCurrentPuzzleState()
-	//startState.(*NPuzzleState).printCurrentGoalState()
 	//describe(startState)
 
 	mySolver := createSolver()
@@ -127,7 +129,7 @@ func mainLargeRun(seed int) {
 	} else {
 		fmt.Printf("Found solution is NOT valid.\n")
 	}
-
+	PrintMemUsage()
 	fmt.Printf("\n")
 
 }
@@ -183,7 +185,6 @@ func mainProfileRun(seed int) {
 
 }
 
-
 func validateSolution(solutionList *[]*SequentialInterface) bool {
 	switch (*(*solutionList)[0]).(type) {
 	case *NPuzzleState:
@@ -194,4 +195,22 @@ func validateSolution(solutionList *[]*SequentialInterface) bool {
 		// no match; here v has the same type as i
 	}
 	return false
+}
+
+//PrintMemUsage taken from:
+//https://golangcode.com/print-the-current-memory-usage/
+// PrintMemUsage outputs the current, total and OS memory being used. As well as the number
+// of garage collection cycles completed.
+func PrintMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	// For info on each, see: https://golang.org/pkg/runtime/#MemStats
+	fmt.Printf("Alloc = %v MiB", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+}
+
+func bToMb(b uint64) uint64 {
+	return b / 1024 / 1024
 }
