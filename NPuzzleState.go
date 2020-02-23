@@ -49,6 +49,25 @@ func (s *NPuzzleState) shuffle(shuffleAmount int) {
 	}
 }
 
+//shuffleToLen will take the given puzzleState and make N valid non-repeating moves
+func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
+	if shuffleAmount < 1 {
+		return
+	}
+	// make heap.
+	// make dictionary of visited states
+	// add unique children to heap.
+	// Prioritize heap by cost.
+	// When thisChild.cost = len, set s.goalState to be thisChild.puzzleState
+	for x := 0; x < shuffleAmount; {
+		thisMove := (*s.possibleMoves)[rand.Intn(len(*s.possibleMoves))]
+		if s.makeMove(thisMove) {
+			x++
+			//s.printCurrentGoalState()
+		}
+	}
+}
+
 func (s *NPuzzleState) isValidMove(thisMove rune) bool {
 	if thisMove == 'u' {
 		return s.currentY > 0
@@ -321,6 +340,35 @@ func createNPuzzleStartState(nSize int, initShuffleAmount int) *NPuzzleState {
 	startState.copyGoalToPuzzleState()
 
 	startState.shuffle(initShuffleAmount)
+	startState.getH()
+	startState.cost = 0
+	return startState
+}
+
+func createNPuzzleStartStateWithSolLen(nSize int, targetSolLen int) *NPuzzleState {
+	var goalState *[][]int
+
+	goalState = getBasicGoalState(nSize)
+
+	possibleMoves := make([]rune, 0)
+	possibleMoves = append(possibleMoves, 'u', 'l', 'd', 'r')
+
+	goalDict := make(map[int]coord)
+
+	startState := &NPuzzleState{
+		goalState:     goalState,
+		currentX:      nSize - 1,
+		currentH:      -1,
+		currentY:      nSize - 1,
+		possibleMoves: &possibleMoves,
+		nSize:         nSize,
+		goalDict:      &goalDict,
+	}
+
+	startState.populateGoalDict()
+	startState.copyGoalToPuzzleState()
+
+	startState.shuffleToLen(targetSolLen)
 	startState.getH()
 	startState.cost = 0
 	return startState

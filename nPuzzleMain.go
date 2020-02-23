@@ -27,15 +27,16 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for x := 0; x < 1000; x++ {
-		if x == 27 {
-
-		} else {
-			//mainBasicRun(0)
-			mainLargeRun(x)
-			//mainProfileRun(x)
-		}
-	}
+	//for x := 0; x < 1000; x++ {
+	//	if x == 27 {
+	//
+	//	} else {
+	//		//mainBasicRun(0)
+	//		mainLargeRun(x)
+	//		//mainProfileRun(x)
+	//	}
+	//}
+	mainCreateKnownLengthRun(0, 4)
 	//mainBasicRun(4)
 }
 
@@ -185,6 +186,52 @@ func mainProfileRun(seed int) {
 		fmt.Printf("Found solution is NOT valid.\n")
 	}
 
+	fmt.Printf("\n")
+
+}
+
+func mainCreateKnownLengthRun(seed int, targetSolLen int) {
+
+	fmt.Printf("Starting solver for seed %v, target len %v.\n", seed, targetSolLen)
+
+	nSize := 4
+	var startState SequentialInterface
+
+	rand.Seed(int64(seed))
+
+	startState = createNPuzzleStartStateWithSolLen(nSize, targetSolLen)
+
+	//startState = createNPuzzleStartState(nSize, 250)
+
+	startState.(*NPuzzleState).printCurrentPuzzleState()
+	startState.(*NPuzzleState).printCurrentGoalState()
+	startTime := time.Now()
+	//describe(startState)
+
+	mySolver := createSolver()
+
+	//mySolver.solve(&startState, false)
+
+	//solvedList := mySolver.solveAStar(&startState)
+	//solvedList:=mySolver.solveGreedy(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
+
+	//for _, singleNode := range *solvedList {
+	//	var thisState *NPuzzleState
+	//	thisState = (*singleNode).(*NPuzzleState)
+	//	thisState.printCurrentPuzzleState()
+	//}
+
+	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
+
+	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
+
+	if validateSolution(solvedList) {
+		fmt.Printf("Found solution is valid.\n")
+	} else {
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+	PrintMemUsage()
 	fmt.Printf("\n")
 
 }
