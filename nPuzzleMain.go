@@ -27,10 +27,14 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for x := 0; x < 100; x++ {
-		//mainBasicRun(0)
-		mainLargeRun(x)
-		//mainProfileRun(x)
+	for x := 0; x < 1000; x++ {
+		if x == 27 {
+
+		} else {
+			//mainBasicRun(0)
+			mainLargeRun(x)
+			//mainProfileRun(x)
+		}
 	}
 	//mainBasicRun(4)
 }
