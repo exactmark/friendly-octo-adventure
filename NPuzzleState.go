@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"math"
 	"math/rand"
@@ -54,18 +55,41 @@ func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
 	if shuffleAmount < 1 {
 		return
 	}
+
 	// make heap.
+	frontierHeap := make(PriorityQueueHigh, 0)
+	heap.Init(&frontierHeap)
+
 	// make dictionary of visited states
-	// add unique children to heap.
-	// Prioritize heap by cost.
-	// When thisChild.cost = len, set s.goalState to be thisChild.puzzleState
-	for x := 0; x < shuffleAmount; {
-		thisMove := (*s.possibleMoves)[rand.Intn(len(*s.possibleMoves))]
-		if s.makeMove(thisMove) {
-			x++
-			//s.printCurrentGoalState()
-		}
+	visitedStates := make(map[string]int, 0)
+	visitedStates[s.getStateIdentifier()] = s.getCurrentCost()
+
+	//seed the heap
+	initialChildList := s.getChildren()
+
+	for _, val := range initialChildList {
+		visitedStates[(*val).getStateIdentifier()] = (*val).getCurrentCost()
+		frontierHeap.PushSequentialInterface(val, (*val).getCurrentCost())
 	}
+
+	inspectedState := frontierHeap.PopSequentialInterface()
+
+	for (*inspectedState).getCurrentCost() < shuffleAmount {
+		childList := (*inspectedState).getChildren()
+		for _, val := range childList {
+			_, ok := visitedStates[(*val).getStateIdentifier()]
+			if !ok {
+				visitedStates[(*val).getStateIdentifier()] = (*val).getCurrentCost()
+				frontierHeap.PushSequentialInterface(val, (*val).getCurrentCost())
+			}
+		}
+		inspectedState = frontierHeap.PopSequentialInterface()
+	}
+
+	s.puzzleState = (*inspectedState).(*NPuzzleState).puzzleState
+	s.stateIdentifierCreated = false
+	s.currentX = (*inspectedState).(*NPuzzleState).currentX
+	s.currentY = (*inspectedState).(*NPuzzleState).currentY
 }
 
 func (s *NPuzzleState) isValidMove(thisMove rune) bool {
@@ -189,6 +213,10 @@ func (s *NPuzzleState) getH() int {
 
 func (s *NPuzzleState) getExpectedCost() int {
 	return s.cost + s.getH()
+}
+
+func (s *NPuzzleState) getCurrentCost() int {
+	return s.cost
 }
 
 func (s *NPuzzleState) getGoalIdentifier() string {

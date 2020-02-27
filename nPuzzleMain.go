@@ -36,7 +36,9 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
-	mainCreateKnownLengthRun(0, 4)
+	for targetLength := 0; targetLength < 200; targetLength++ {
+		mainCreateKnownLengthRun(0, targetLength)
+	}
 	//mainBasicRun(4)
 }
 
@@ -212,9 +214,9 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 
 	//mySolver.solve(&startState, false)
 
-	//solvedList := mySolver.solveAStar(&startState)
+	solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	solvedList := mySolver.greedyGuidedAStar(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState

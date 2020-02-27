@@ -12,6 +12,7 @@ type SequentialInterface interface {
 	getChildren() []*SequentialInterface
 	getH() int
 	getExpectedCost() int
+	getCurrentCost() int
 	getStateIdentifier() string
 	getGoalIdentifier() string
 	isGoal() bool
