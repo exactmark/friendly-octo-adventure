@@ -76,11 +76,34 @@ func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
 
 	for (*inspectedState).getCurrentCost() < shuffleAmount {
 		childList := (*inspectedState).getChildren()
-		for _, val := range childList {
-			_, ok := visitedStates[(*val).getStateIdentifier()]
+		for _, firstLevelChild := range childList {
+			_, ok := visitedStates[(*firstLevelChild).getStateIdentifier()]
 			if !ok {
-				visitedStates[(*val).getStateIdentifier()] = (*val).getCurrentCost()
-				frontierHeap.PushSequentialInterface(val, (*val).getCurrentCost())
+				secondOrderChildList := (*firstLevelChild).getChildren()
+
+				foundShorter:=false
+				for _,secondLevelChild:=range secondOrderChildList{
+					secondChildCost, isRelative := visitedStates[(*secondLevelChild).getStateIdentifier()]
+					if isRelative{
+						if secondChildCost+1< (*firstLevelChild).(*NPuzzleState).cost{
+							(*firstLevelChild).(*NPuzzleState).cost=secondChildCost+1
+							foundShorter=true
+						}
+					}
+				}
+				if foundShorter{
+					for _,secondLevelChild:=range secondOrderChildList{
+						secondChildCost, isRelative := visitedStates[(*secondLevelChild).getStateIdentifier()]
+						if isRelative{
+							if (*firstLevelChild).(*NPuzzleState).cost+1<secondChildCost {
+								visitedStates[(*secondLevelChild).getStateIdentifier()]=(*firstLevelChild).(*NPuzzleState).cost+1
+							}
+						}
+					}
+					}
+
+				visitedStates[(*firstLevelChild).getStateIdentifier()] = (*firstLevelChild).getCurrentCost()
+				frontierHeap.PushSequentialInterface(firstLevelChild, (*firstLevelChild).getCurrentCost())
 			}
 		}
 		inspectedState = frontierHeap.PopSequentialInterface()

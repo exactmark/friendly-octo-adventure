@@ -36,7 +36,7 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
-	for targetLength := 0; targetLength < 200; targetLength++ {
+	for targetLength := 2; targetLength < 200; targetLength++ {
 		mainCreateKnownLengthRun(0, targetLength)
 	}
 	//mainBasicRun(4)
