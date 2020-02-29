@@ -22,6 +22,7 @@ type SequentialInterface interface {
 	getParent() *SequentialInterface
 	createSequentialState(goalState interface{}, startState interface{}) *SequentialInterface
 	exportCurrentState() interface{}
+	exportGoalState() interface{}
 	setParent(node *SequentialInterface)
 	strandDeepCopy() *SequentialInterface
 }
@@ -317,8 +318,8 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			}
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
-			//stopInc = len(*currentSolution) / 2
-			stopInc = 40
+			stopInc = len(*currentSolution) / 2
+			//stopInc = 40
 			//fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)

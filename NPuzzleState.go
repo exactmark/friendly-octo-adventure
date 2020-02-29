@@ -50,7 +50,13 @@ func (s *NPuzzleState) shuffle(shuffleAmount int) {
 	}
 }
 
+
 //shuffleToLen will take the given puzzleState and make N valid non-repeating moves
+// This is obviously still not right. This was intended to be a depth first search
+// but I am unable to get the mapping of prior states to work correctly. We're
+// hitting an undiscoveed shortcut. So I can rewrite this to recursively adjust all
+// found states to the lowest possible cost, but that seems super expensive. Going
+// to attempt a different shotgun approach now.
 func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
 	if shuffleAmount < 1 {
 		return
@@ -74,36 +80,42 @@ func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
 
 	inspectedState := frontierHeap.PopSequentialInterface()
 
-	for (*inspectedState).getCurrentCost() < shuffleAmount {
+	for true {
 		childList := (*inspectedState).getChildren()
+		foundShorter := false
+		bestInspectedCost := (*inspectedState).getCurrentCost()
+
+		//for each child, see if we can reach inspected node faster from
+		// child + 1
 		for _, firstLevelChild := range childList {
-			_, ok := visitedStates[(*firstLevelChild).getStateIdentifier()]
-			if !ok {
-				secondOrderChildList := (*firstLevelChild).getChildren()
-
-				foundShorter:=false
-				for _,secondLevelChild:=range secondOrderChildList{
-					secondChildCost, isRelative := visitedStates[(*secondLevelChild).getStateIdentifier()]
-					if isRelative{
-						if secondChildCost+1< (*firstLevelChild).(*NPuzzleState).cost{
-							(*firstLevelChild).(*NPuzzleState).cost=secondChildCost+1
-							foundShorter=true
-						}
-					}
+			firstChildCost, alreadyChecked := visitedStates[(*firstLevelChild).getStateIdentifier()]
+			if alreadyChecked {
+				if firstChildCost+1 < bestInspectedCost {
+					bestInspectedCost = firstChildCost + 1
+					foundShorter = true
 				}
-				if foundShorter{
-					for _,secondLevelChild:=range secondOrderChildList{
-						secondChildCost, isRelative := visitedStates[(*secondLevelChild).getStateIdentifier()]
-						if isRelative{
-							if (*firstLevelChild).(*NPuzzleState).cost+1<secondChildCost {
-								visitedStates[(*secondLevelChild).getStateIdentifier()]=(*firstLevelChild).(*NPuzzleState).cost+1
-							}
-						}
-					}
-					}
-
-				visitedStates[(*firstLevelChild).getStateIdentifier()] = (*firstLevelChild).getCurrentCost()
-				frontierHeap.PushSequentialInterface(firstLevelChild, (*firstLevelChild).getCurrentCost())
+			}
+		}
+		if foundShorter {
+			(*inspectedState).(*NPuzzleState).cost = bestInspectedCost
+		}
+		//if this node has sufficient cost after checking for shortcuts, then
+		// this is the node we're looking for
+		if (*inspectedState).getCurrentCost() >= shuffleAmount {
+			break
+		}
+		//for each child, see if we can reach child node faster from
+		// inspected node + 1
+		for _, firstLevelChild := range childList {
+			firstChildCost, alreadyChecked := visitedStates[(*firstLevelChild).getStateIdentifier()]
+			if alreadyChecked {
+				if firstChildCost > bestInspectedCost+1 {
+					visitedStates[(*firstLevelChild).getStateIdentifier()] = bestInspectedCost + 1
+				}
+			} else {
+				(*firstLevelChild).(*NPuzzleState).cost = bestInspectedCost + 1
+				visitedStates[(*firstLevelChild).getStateIdentifier()] = bestInspectedCost + 1
+				frontierHeap.PushSequentialInterface(firstLevelChild, bestInspectedCost+1)
 			}
 		}
 		inspectedState = frontierHeap.PopSequentialInterface()
@@ -486,6 +498,18 @@ func (s *NPuzzleState) exportCurrentState() interface{} {
 	for y := 0; y < s.nSize; y++ {
 		for x := 0; x < s.nSize; x++ {
 			returnState = append(returnState, s.puzzleState[y][x])
+		}
+	}
+
+	return returnState
+}
+
+func (s *NPuzzleState) exportGoalState() interface{} {
+	returnState := make([]int, 0)
+
+	for y := 0; y < s.nSize; y++ {
+		for x := 0; x < s.nSize; x++ {
+			returnState = append(returnState, (*s.goalState)[y][x])
 		}
 	}
 

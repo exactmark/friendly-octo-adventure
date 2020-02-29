@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var initShotGunShuffle = 10
+
 func describe(i interface{}) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
@@ -36,9 +38,13 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
+	//for targetLength := 2; targetLength < 200; targetLength++ {
+	//	mainCreateKnownLengthRun(0, targetLength)
+	//}
 	for targetLength := 2; targetLength < 200; targetLength++ {
-		mainCreateKnownLengthRun(0, targetLength)
-	}
+		for x:=0;x<10;x++{
+		mainCreateShotgunRun(x, targetLength)
+}	}
 	//mainBasicRun(4)
 }
 
@@ -236,6 +242,73 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 	PrintMemUsage()
 	fmt.Printf("\n")
 
+}
+
+func mainCreateShotgunRun(seed int, minSolutionLength int) {
+	fmt.Printf("Starting shotgun solver for seed %v, targetMinSolLen %v.\n", seed, minSolutionLength)
+
+	nSize := 4
+	var startState SequentialInterface
+
+	rand.Seed(int64(seed))
+
+	shuffleAmount := minSolutionLength + 10
+	if shuffleAmount<initShotGunShuffle{
+		shuffleAmount=initShotGunShuffle
+	}
+	fmt.Printf("Starting shuffle at %v\n",shuffleAmount)
+	ggSolLen := 0
+
+	var targetCopy *SequentialInterface
+	var ggStartTime time.Time
+	var ggEndDuration time.Duration
+
+	for ggSolLen < minSolutionLength {
+		startState = createNPuzzleStartState(nSize, shuffleAmount)
+		targetCopy = startState.createSequentialState(startState.exportCurrentState(), startState.exportGoalState())
+		ggStartTime = time.Now()
+		ggSolver := createSolver()
+		ggSolvedList := ggSolver.greedyGuidedAStar(&startState)
+		ggEndDuration = time.Since(ggStartTime)
+		ggSolLen = len(*ggSolvedList)
+		initShotGunShuffle=shuffleAmount
+		shuffleAmount = shuffleAmount +20
+	}
+
+	(*targetCopy).(*NPuzzleState).printCurrentPuzzleState()
+	(*targetCopy).(*NPuzzleState).printCurrentGoalState()
+	fmt.Printf("Found gga solution in %v time.\n", ggEndDuration)
+
+	fmt.Printf("Found gga solution in %v steps\n", ggSolLen)
+
+	startTime := time.Now()
+	//describe(startState)
+
+	mySolver := createSolver()
+
+	//mySolver.solve(&startState, false)
+
+	solvedList := mySolver.solveAStar(targetCopy)
+	//solvedList:=mySolver.solveGreedy(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
+
+	//for _, singleNode := range *solvedList {
+	//	var thisState *NPuzzleState
+	//	thisState = (*singleNode).(*NPuzzleState)
+	//	thisState.printCurrentPuzzleState()
+	//}
+
+	fmt.Printf("Found a* solution in %v time.\n", time.Since(startTime))
+
+	fmt.Printf("Found a* solution in %v steps\n", len(*solvedList))
+
+	if validateSolution(solvedList) {
+		fmt.Printf("Found solution is valid.\n")
+	} else {
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+	//PrintMemUsage()
+	fmt.Printf("\n")
 }
 
 func validateSolution(solutionList *[]*SequentialInterface) bool {
