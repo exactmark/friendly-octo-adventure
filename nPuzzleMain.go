@@ -41,10 +41,16 @@ func main() {
 	//for targetLength := 2; targetLength < 200; targetLength++ {
 	//	mainCreateKnownLengthRun(0, targetLength)
 	//}
-	for targetLength := 2; targetLength < 200; targetLength++ {
-		for x:=0;x<10;x++{
-		mainCreateShotgunRun(x, targetLength)
-}	}
+	//for targetLength := 2; targetLength < 200; targetLength++ {
+	//	for x := 0; x < 10; x++ {
+	//		mainCreateShotgunRun(x, targetLength)
+	//	}
+	//}
+	for shuffleAmount:=2;shuffleAmount<1048577;shuffleAmount*=2  {
+		for x:=0;x<100;x++{
+			mainDoGrowingRun(x,shuffleAmount)
+		}
+	}
 	//mainBasicRun(4)
 }
 
@@ -253,10 +259,10 @@ func mainCreateShotgunRun(seed int, minSolutionLength int) {
 	rand.Seed(int64(seed))
 
 	shuffleAmount := minSolutionLength + 10
-	if shuffleAmount<initShotGunShuffle{
-		shuffleAmount=initShotGunShuffle
+	if shuffleAmount < initShotGunShuffle {
+		shuffleAmount = initShotGunShuffle
 	}
-	fmt.Printf("Starting shuffle at %v\n",shuffleAmount)
+	fmt.Printf("Starting shuffle at %v\n", shuffleAmount)
 	ggSolLen := 0
 
 	var targetCopy *SequentialInterface
@@ -271,8 +277,8 @@ func mainCreateShotgunRun(seed int, minSolutionLength int) {
 		ggSolvedList := ggSolver.greedyGuidedAStar(&startState)
 		ggEndDuration = time.Since(ggStartTime)
 		ggSolLen = len(*ggSolvedList)
-		initShotGunShuffle=shuffleAmount
-		shuffleAmount = shuffleAmount +20
+		initShotGunShuffle = shuffleAmount
+		shuffleAmount = shuffleAmount + 20
 	}
 
 	(*targetCopy).(*NPuzzleState).printCurrentPuzzleState()
@@ -303,6 +309,44 @@ func mainCreateShotgunRun(seed int, minSolutionLength int) {
 	fmt.Printf("Found a* solution in %v steps\n", len(*solvedList))
 
 	if validateSolution(solvedList) {
+		fmt.Printf("Found solution is valid.\n")
+	} else {
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+	//PrintMemUsage()
+	fmt.Printf("\n")
+}
+
+func mainDoGrowingRun(seed int, shuffleAmount int) {
+	fmt.Printf("Starting shotgun solver for seed %v, shuffle of %v.\n", seed, shuffleAmount)
+
+	nSize := 4
+	var startState SequentialInterface
+
+	rand.Seed(int64(seed))
+
+	fmt.Printf("Starting shuffle at %v\n", shuffleAmount)
+	ggSolLen := 0
+
+	var targetCopy *SequentialInterface
+	var ggStartTime time.Time
+	var ggEndDuration time.Duration
+
+	startState = createNPuzzleStartState(nSize, shuffleAmount)
+	targetCopy = startState.createSequentialState(startState.exportCurrentState(), startState.exportGoalState())
+	ggStartTime = time.Now()
+	ggSolver := createSolver()
+	ggSolvedList := ggSolver.greedyGuidedAStar(&startState)
+	ggEndDuration = time.Since(ggStartTime)
+	ggSolLen = len(*ggSolvedList)
+
+	(*targetCopy).(*NPuzzleState).printCurrentPuzzleState()
+	(*targetCopy).(*NPuzzleState).printCurrentGoalState()
+	fmt.Printf("Found gga solution in %v time.\n", ggEndDuration)
+
+	fmt.Printf("Found gga solution in %v steps\n", ggSolLen)
+
+	if validateSolution(ggSolvedList) {
 		fmt.Printf("Found solution is valid.\n")
 	} else {
 		fmt.Printf("Found solution is NOT valid.\n")
