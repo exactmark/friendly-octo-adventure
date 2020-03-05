@@ -51,13 +51,14 @@ func (s *NPuzzleState) shuffle(shuffleAmount int) {
 }
 
 
-//shuffleToLen will take the given puzzleState and make N valid non-repeating moves
+//shuffleWithoutRepeats will take the given puzzleState and make N valid non-repeating moves
 // This is obviously still not right. This was intended to be a depth first search
 // but I am unable to get the mapping of prior states to work correctly. We're
 // hitting an undiscoveed shortcut. So I can rewrite this to recursively adjust all
-// found states to the lowest possible cost, but that seems super expensive. Going
-// to attempt a different shotgun approach now.
-func (s *NPuzzleState) shuffleToLen(shuffleAmount int) {
+// found states to the lowest possible cost, but that seems super expensive.
+// And actually this would need to be a breadth first search to work, so...
+// Going to attempt a different shotgun approach now.
+func (s *NPuzzleState) shuffleWithoutRepeats(shuffleAmount int) {
 	if shuffleAmount < 1 {
 		return
 	}
@@ -431,7 +432,7 @@ func createNPuzzleStartStateWithSolLen(nSize int, targetSolLen int) *NPuzzleStat
 	startState.populateGoalDict()
 	startState.copyGoalToPuzzleState()
 
-	startState.shuffleToLen(targetSolLen)
+	startState.shuffleWithoutRepeats(targetSolLen)
 	startState.getH()
 	startState.cost = 0
 	return startState

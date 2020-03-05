@@ -38,19 +38,19 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
-	//for targetLength := 2; targetLength < 200; targetLength++ {
-	//	mainCreateKnownLengthRun(0, targetLength)
-	//}
+	for targetLength := 2; targetLength < 131072; targetLength*=2 {
+		mainCreateKnownLengthRun(0, targetLength)
+	}
 	//for targetLength := 2; targetLength < 200; targetLength++ {
 	//	for x := 0; x < 10; x++ {
 	//		mainCreateShotgunRun(x, targetLength)
 	//	}
 	//}
-	for shuffleAmount:=2;shuffleAmount<1048577;shuffleAmount*=2  {
-		for x:=0;x<100;x++{
-			mainDoGrowingRun(x,shuffleAmount)
-		}
-	}
+	//for shuffleAmount:=2;shuffleAmount<1048577;shuffleAmount*=2  {
+	//	for x:=0;x<100;x++{
+	//		mainDoGrowingRun(x,shuffleAmount)
+	//	}
+	//}
 	//mainBasicRun(4)
 }
 
@@ -215,7 +215,7 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 
 	startState = createNPuzzleStartStateWithSolLen(nSize, targetSolLen)
 
-	//startState = createNPuzzleStartState(nSize, 250)
+	//startState = createNPuzzleStartState(nSize, targetSolLen)
 
 	startState.(*NPuzzleState).printCurrentPuzzleState()
 	startState.(*NPuzzleState).printCurrentGoalState()
@@ -226,9 +226,9 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 
 	//mySolver.solve(&startState, false)
 
-	solvedList := mySolver.solveAStar(&startState)
+	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState

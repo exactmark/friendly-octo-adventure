@@ -196,7 +196,7 @@ func (solver *Solver) findSolutionPart(solutionList *[]*SequentialInterface, env
 }
 
 func (solver *Solver) greedyGuidedAStar(s *SequentialInterface) *[]*SequentialInterface {
-	return solver.greedyGuidedAStarWithArgs(s, 4, 25)
+	return solver.greedyGuidedAStarWithArgs(s, 10, 25)
 }
 
 func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc int, stopInc int) *[]*SequentialInterface {
@@ -309,8 +309,6 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			fmt.Printf("Solution length has grown.\n")
 		} else if newSolutionLength < oldSolutionLen {
 			//fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
-			currentInc = startInc
-			stepper = 0
 			for solver.spliceOutRepeatedLoops(lastNode) {
 				currentSolution = makeTrackbackArray(lastNode)
 				newSolutionLength = len(*currentSolution)
@@ -319,7 +317,10 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
 			stopInc = len(*currentSolution) / 2
+			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			//stopInc = 40
+			currentInc = startInc
+			stepper = 0
 			//fmt.Printf("CacheMisses/Hits: %v/ %v\n", solver.cacheMiss, solver.cacheHit)
 		} else {
 			//fmt.Printf("Found: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
