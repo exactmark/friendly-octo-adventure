@@ -38,9 +38,19 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
-	for targetLength := 2; targetLength < 131072; targetLength*=2 {
-		mainCreateKnownLengthRun(0, targetLength)
+	startTime := time.Now()
+	iterMax:=10
+	for iteration:=0;iteration<iterMax ;iteration++  {
+
+		//mainCreateKnownLengthRun(0,512)
+		mainLargeRun(0)
 	}
+	fmt.Printf("Total time %v\n",time.Since(startTime))
+	fmt.Printf("Time per %v\n",time.Since(startTime)/time.Duration(iterMax))
+
+	//for targetLength := 2; targetLength < 131072; targetLength*=2 {
+	//	mainCreateKnownLengthRun(0, targetLength)
+	//}
 	//for targetLength := 2; targetLength < 200; targetLength++ {
 	//	for x := 0; x < 10; x++ {
 	//		mainCreateShotgunRun(x, targetLength)
@@ -116,7 +126,7 @@ func mainLargeRun(seed int) {
 
 	rand.Seed(int64(seed))
 
-	startState = createNPuzzleStartState(nSize, 300)
+	startState = createNPuzzleStartState(nSize, 3000)
 
 	//startState = createNPuzzleStartState(nSize, 250)
 

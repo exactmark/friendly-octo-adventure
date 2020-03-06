@@ -308,16 +308,16 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 			}
 			fmt.Printf("Solution length has grown.\n")
 		} else if newSolutionLength < oldSolutionLen {
-			//fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			for solver.spliceOutRepeatedLoops(lastNode) {
 				currentSolution = makeTrackbackArray(lastNode)
 				newSolutionLength = len(*currentSolution)
-				//fmt.Printf("After splice: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+				fmt.Printf("After splice: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			}
 			currentSolution = makeTrackbackArray(lastNode)
 			newSolutionLength = len(*currentSolution)
 			stopInc = len(*currentSolution) / 2
-			fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
+			//fmt.Printf("Found better: sol len %v, stepper %v,currentInc %v\n", newSolutionLength, stepper, currentInc)
 			//stopInc = 40
 			currentInc = startInc
 			stepper = 0
@@ -354,14 +354,74 @@ func (solver *Solver) greedyGuidedAStarWithArgs(s *SequentialInterface, startInc
 	return currentSolution
 }
 
+type matchIndexPoint struct {
+	pointIndex int
+	state      *SequentialInterface
+}
+
+type matchIndexDouble struct {
+	distance    int
+	firstState  *SequentialInterface
+	secondState *SequentialInterface
+}
+
+func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
+	uniqueMap := make(map[string]matchIndexPoint, 0)
+	doubles := make([]matchIndexDouble, 0)
+	inspectedNode := (*node).getParent()
+	currentIndex := 0
+	for inspectedNode != nil {
+		earlierNode, ok := uniqueMap[(*inspectedNode).getStateIdentifier()]
+		if ok {
+			//fmt.Printf("found repeat\n")
+			//add to doubles here
+			//(*firstState).setParent((*secondState).getParent())
+			thisDouble := matchIndexDouble{
+				distance:    currentIndex - earlierNode.pointIndex,
+				firstState:  earlierNode.state,
+				secondState: inspectedNode,
+			}
+			doubles = append(doubles, thisDouble)
+		} else {
+			uniqueMap[(*inspectedNode).getStateIdentifier()] = matchIndexPoint{
+				pointIndex: currentIndex,
+				state:      inspectedNode,
+			}
+		}
+		inspectedNode = (*inspectedNode).getParent()
+		currentIndex++
+	}
+	//find max distance in doubles
+	if len(doubles)==0{
+		return false
+	}else{
+		var	bestDouble matchIndexDouble
+		maxDist:=0
+		for _,val:=range doubles {
+			if val.distance>maxDist{
+				maxDist=val.distance
+				bestDouble=val
+			}
+		}
+		if maxDist>2{
+			fmt.Printf("Splice dist %v\n",maxDist)
+		}
+
+		(*(bestDouble.firstState)).setParent((*(bestDouble.secondState)).getParent())
+		return true
+	}
+
+	return false
+}
+
 //spliceOutRepeatedLoops will currently go through each state, find the first repeat
 // and point the first node to the child of the second node.
 // This lends itself to removing very simple useless moves where a state is tried then
 // immediately backed out, i.e. **ABA***.
 // However, consider the case of **ABAC******BDEF*** . In this case, the FirstA will
 // now point to FirstC, however a better splice would be to point FirstB to FirstD.
-func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
-
+func (solver *Solver) spliceOutRepeatedLoopsOrig(node *SequentialInterface) bool {
+	//12 to 30 sec
 	uniqueMap := make(map[string]*SequentialInterface, 0)
 	//doubles := make([][]*SequentialInterface, 0)
 	inspectedNode := (*node).getParent()
