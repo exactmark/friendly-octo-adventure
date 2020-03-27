@@ -9,7 +9,7 @@ Golang was chosen as it has inherent parallel processing, and I've needed
 an excuse to write go code.
 
 ## Results
-With the initial set of results, it appears that this algorithm reduces the time complexity fro b^d 
+With the initial set of results, it appears that this algorithm reduces the time complexity from b^d 
 for the traditional a\* algorithm to a lower family of d^n, where b is the branching factor
 and d is the solution depth. This means it's moved from an exponential complexity to a polynomial. 
 Contiguous memory usage has also been greatly decreased.  
