@@ -14,6 +14,9 @@ for the traditional a\* algorithm to a lower family of d^n, where b is the branc
 and d is the solution depth. This means it's moved from an exponential complexity to a polynomial. 
 Contiguous memory usage has also been greatly decreased.  
 
+Note that the point on 80 below represents 100 runs of the new algorithm, with an 
+average run time of 2 minutes 45 seconds.
+
 ![](initResultsGraph.png)
 
 ### The Current Problem
