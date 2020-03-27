@@ -392,19 +392,19 @@ func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
 		currentIndex++
 	}
 	//find max distance in doubles
-	if len(doubles)==0{
+	if len(doubles) == 0 {
 		return false
-	}else{
-		var	bestDouble matchIndexDouble
-		maxDist:=0
-		for _,val:=range doubles {
-			if val.distance>maxDist{
-				maxDist=val.distance
-				bestDouble=val
+	} else {
+		var bestDouble matchIndexDouble
+		maxDist := 0
+		for _, val := range doubles {
+			if val.distance > maxDist {
+				maxDist = val.distance
+				bestDouble = val
 			}
 		}
-		if maxDist>2{
-			fmt.Printf("Splice dist %v\n",maxDist)
+		if maxDist > 2 {
+			fmt.Printf("Splice dist %v\n", maxDist)
 		}
 
 		(*(bestDouble.firstState)).setParent((*(bestDouble.secondState)).getParent())
@@ -420,7 +420,7 @@ func (solver *Solver) spliceOutRepeatedLoops(node *SequentialInterface) bool {
 // immediately backed out, i.e. **ABA***.
 // However, consider the case of **ABAC******BDEF*** . In this case, the FirstA will
 // now point to FirstC, however a better splice would be to point FirstB to FirstD.
-func (solver *Solver) spliceOutRepeatedLoopsOrig(node *SequentialInterface) bool {
+func (solver *Solver) spliceOutRepeatedLoopsOld(node *SequentialInterface) bool {
 	//12 to 30 sec
 	uniqueMap := make(map[string]*SequentialInterface, 0)
 	//doubles := make([][]*SequentialInterface, 0)

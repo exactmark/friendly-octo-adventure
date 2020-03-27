@@ -38,16 +38,26 @@ func main() {
 	//		//mainProfileRun(x)
 	//	}
 	//}
-	startTime := time.Now()
-	iterMax:=10
-	for iteration:=0;iteration<iterMax ;iteration++  {
 
-		//mainCreateKnownLengthRun(0,512)
-		mainLargeRun(0)
-	}
-	fmt.Printf("Total time %v\n",time.Since(startTime))
-	fmt.Printf("Time per %v\n",time.Since(startTime)/time.Duration(iterMax))
+	//startTime := time.Now()
+	//iterMax:=1000
+	//for iteration:=0;iteration<iterMax ;iteration++  {
+	//
+	//	//mainCreateKnownLengthRun(0,512)
+	//	mainLargeRun(0)
+	//}
+	//fmt.Printf("Total time %v\n",time.Since(startTime))
+	//fmt.Printf("Time per %v\n",time.Since(startTime)/time.Duration(iterMax))
 
+	//startTime := time.Now()
+	//iterMax := 100
+	//for iteration := 0; iteration < iterMax; iteration++ {
+	//
+	//	mainTargetedRun(0)
+	//	fmt.Printf("Time per %v for %v iterations\n", time.Since(startTime)/time.Duration(iteration+1), iteration+1)
+	//}
+	//fmt.Printf("Time per %v\n", time.Since(startTime)/time.Duration(iterMax))
+	//fmt.Printf("Total time %v\n", time.Since(startTime))
 	//for targetLength := 2; targetLength < 131072; targetLength*=2 {
 	//	mainCreateKnownLengthRun(0, targetLength)
 	//}
@@ -61,7 +71,9 @@ func main() {
 	//		mainDoGrowingRun(x,shuffleAmount)
 	//	}
 	//}
-	//mainBasicRun(4)
+	mainBasicRun(4)
+	//mainLargeRun(3)
+
 }
 
 func mainBasicRun(seed int) {
@@ -81,17 +93,71 @@ func mainBasicRun(seed int) {
 	startState = createNPuzzleStartState(nSize, 250)
 
 	startTime := time.Now()
-	//startState.(*NPuzzleState).printCurrentPuzzleState()
-	//startState.(*NPuzzleState).printCurrentGoalState()
+	startState.(*NPuzzleState).printCurrentPuzzleState()
+	startState.(*NPuzzleState).printCurrentGoalState()
 	//describe(startState)
 
 	mySolver := createSolver()
 
 	//mySolver.solve(&startState, false)
 
-	//solvedList := mySolver.solveAStar(&startState)
+	solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	solvedList := mySolver.greedyGuidedAStar(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
+
+	//for _, singleNode := range *solvedList {
+	//	var thisState *NPuzzleState
+	//	thisState = (*singleNode).(*NPuzzleState)
+	//	thisState.printCurrentPuzzleState()
+	//}
+
+	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
+
+	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
+
+	if validateSolution(solvedList) {
+		fmt.Printf("Found solution is valid.\n")
+	} else {
+		fmt.Printf("Found solution is NOT valid.\n")
+	}
+	PrintMemUsage()
+	fmt.Printf("\n")
+
+}
+
+func mainTargetedRun(seed int) {
+	// this basic setup will solve A* in between 10 and 20 seconds and 51 steps.
+	// the greedy version is non-deterministic. Tends to solve in 20ms, and around 150 steps.
+	// And golang is going to be non-deterministic in both versions. I'm using
+	// GoRoutines for child creation, which means that the order of moves is
+	// potentially different. This explains the difference in solve times on
+	// A* but does not really explain why different seeds will crash.
+
+	nSize := 4
+	var startState SequentialInterface
+
+	//startArray := []int{15, 14, 13, 12, 10, 11, 8, 9, 2, 6, 5, 1, 3, 7, 4, 0}
+	startArray := []int{15, 11, 13, 12, 14, 10, 9, 5, 2, 6, 8, 1, 3, 7, 4, 0}
+	goalArray := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+	startState = createNPuzzleStartStateWithSolLen(nSize, 2)
+
+	startState = *startState.createSequentialState(goalArray, startArray)
+
+	//startState = createNPuzzleStartState(nSize, targetSolLen)
+
+	startState.(*NPuzzleState).printCurrentPuzzleState()
+	startState.(*NPuzzleState).printCurrentGoalState()
+	startTime := time.Now()
+	//describe(startState)
+
+	mySolver := createSolver()
+
+	//mySolver.solve(&startState, false)
+
+	solvedList := mySolver.solveAStar(&startState)
+	//solvedList:=mySolver.solveGreedy(&startState)
+	//solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
