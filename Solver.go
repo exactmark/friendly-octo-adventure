@@ -24,7 +24,6 @@ type SequentialInterface interface {
 	exportCurrentState() interface{}
 	exportGoalState() interface{}
 	setParent(node *SequentialInterface)
-	strandDeepCopy() *SequentialInterface
 }
 
 type Solver struct {

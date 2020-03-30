@@ -101,9 +101,9 @@ func mainBasicRun(seed int) {
 
 	//mySolver.solve(&startState, false)
 
-	solvedList := mySolver.solveAStar(&startState)
+	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
+	solvedList := mySolver.greedyGuidedAStar(&startState)
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
