@@ -126,12 +126,9 @@ func mainBasicRun(seed int) {
 }
 
 func mainTargetedRun(seed int) {
-	// this basic setup will solve A* in between 10 and 20 seconds and 51 steps.
-	// the greedy version is non-deterministic. Tends to solve in 20ms, and around 150 steps.
-	// And golang is going to be non-deterministic in both versions. I'm using
-	// GoRoutines for child creation, which means that the order of moves is
-	// potentially different. This explains the difference in solve times on
-	// A* but does not really explain why different seeds will crash.
+	// Solve one a particular start to goal solution.
+	// The two given below are from Brungger et al http://www.iro.umontreal.ca/~gendron/Pisa/References/BB/Brungger99.pdf
+	// And have a known 80 step optimal solution.
 
 	nSize := 4
 	var startState SequentialInterface
@@ -144,26 +141,13 @@ func mainTargetedRun(seed int) {
 
 	startState = *startState.createSequentialState(goalArray, startArray)
 
-	//startState = createNPuzzleStartState(nSize, targetSolLen)
-
 	startState.(*NPuzzleState).printCurrentPuzzleState()
 	startState.(*NPuzzleState).printCurrentGoalState()
 	startTime := time.Now()
-	//describe(startState)
 
 	mySolver := createSolver()
 
-	//mySolver.solve(&startState, false)
-
 	solvedList := mySolver.solveAStar(&startState)
-	//solvedList:=mySolver.solveGreedy(&startState)
-	//solvedList := mySolver.greedyGuidedAStar(&startState)
-
-	//for _, singleNode := range *solvedList {
-	//	var thisState *NPuzzleState
-	//	thisState = (*singleNode).(*NPuzzleState)
-	//	thisState.printCurrentPuzzleState()
-	//}
 
 	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
 
@@ -178,12 +162,8 @@ func mainTargetedRun(seed int) {
 }
 
 func mainLargeRun(seed int) {
-	// this basic setup will solve A* in between 10 and 20 seconds and 51 steps.
-	// the greedy version is non-deterministic. Tends to solve in 20ms, and around 150 steps.
-	// And golang is going to be non-deterministic in both versions. I'm using
-	// GoRoutines for child creation, which means that the order of moves is
-	// potentially different. This explains the difference in solve times on
-	// A* but does not really explain why different seeds will crash.
+	// this is essentially as the simple run, but a larger shuffle amount. This should really
+	// be moved to an argument.
 
 	fmt.Printf("Starting solver for seed %v.\n", seed)
 
@@ -194,16 +174,11 @@ func mainLargeRun(seed int) {
 
 	startState = createNPuzzleStartState(nSize, 3000)
 
-	//startState = createNPuzzleStartState(nSize, 250)
-
 	startState.(*NPuzzleState).printCurrentPuzzleState()
 	startState.(*NPuzzleState).printCurrentGoalState()
 	startTime := time.Now()
-	//describe(startState)
 
 	mySolver := createSolver()
-
-	//mySolver.solve(&startState, false)
 
 	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
@@ -245,30 +220,25 @@ func mainProfileRun(seed int) {
 
 	startState = createNPuzzleStartState(nSize, 10000)
 
-	//startState = createNPuzzleStartState(nSize, 250)
-
 	startTime := time.Now()
-	//startState.(*NPuzzleState).printCurrentPuzzleState()
-	//startState.(*NPuzzleState).printCurrentGoalState()
-	//describe(startState)
 
 	mySolver := createSolver()
 
-	//mySolver.solve(&startState, false)
 
 	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
 	solvedList := mySolver.greedyGuidedAStar(&startState)
+
+
+	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
+
+	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
 
 	//for _, singleNode := range *solvedList {
 	//	var thisState *NPuzzleState
 	//	thisState = (*singleNode).(*NPuzzleState)
 	//	thisState.printCurrentPuzzleState()
 	//}
-
-	fmt.Printf("Found solution in %v time.\n", time.Since(startTime))
-
-	fmt.Printf("Found solution in %v steps\n", len(*solvedList))
 
 	if validateSolution(solvedList) {
 		fmt.Printf("Found solution is valid.\n")
@@ -281,6 +251,10 @@ func mainProfileRun(seed int) {
 }
 
 func mainCreateKnownLengthRun(seed int, targetSolLen int) {
+	//This uses an attempt to create a known solution length by a) making sure that
+	// states are not repeated, and that b) we're using a reverse greedy i.e., each step
+	// has an absolute number of steps outward. Really the only way to guarantee a length
+	// would be to do a more exhaustive breadth first search with memoization, probably like the Brungger paper.
 
 	fmt.Printf("Starting solver for seed %v, target len %v.\n", seed, targetSolLen)
 
@@ -291,16 +265,12 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 
 	startState = createNPuzzleStartStateWithSolLen(nSize, targetSolLen)
 
-	//startState = createNPuzzleStartState(nSize, targetSolLen)
-
 	startState.(*NPuzzleState).printCurrentPuzzleState()
 	startState.(*NPuzzleState).printCurrentGoalState()
 	startTime := time.Now()
-	//describe(startState)
 
 	mySolver := createSolver()
 
-	//mySolver.solve(&startState, false)
 
 	//solvedList := mySolver.solveAStar(&startState)
 	//solvedList:=mySolver.solveGreedy(&startState)
@@ -327,6 +297,9 @@ func mainCreateKnownLengthRun(seed int, targetSolLen int) {
 }
 
 func mainCreateShotgunRun(seed int, minSolutionLength int) {
+// Creates longer shuffle gga solutions until minSolutionLength is found, then does the same solve
+// via traditional a*
+
 	fmt.Printf("Starting shotgun solver for seed %v, targetMinSolLen %v.\n", seed, minSolutionLength)
 
 	nSize := 4

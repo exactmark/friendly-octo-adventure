@@ -19,6 +19,8 @@ average run time of 2 minutes 45 seconds.
 
 ![](initResultsGraph.png)
 
+Note the 80 step problem came from [Brungger, et al](http://www.iro.umontreal.ca/~gendron/Pisa/References/BB/Brungger99.pdf)
+
 ### The Current Problem
 The example problem used here is the NPuzzle. This is a sliding puzzle
 as seen in your childhood, with n rows of n numbered tiles (missing one).
